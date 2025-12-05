@@ -1,0 +1,30 @@
+server:
+  port: 8082
+  servlet:
+    context-path: / # 项目访问路径，默认是根路径
+
+spring:
+  profiles:
+    active: dev # 【关键】默认激活 dev 环境，这意味着它会自动读取 application-dev.yml
+
+  application:
+    name: orange-tools-backend
+
+  # Jackson 全局时间格式化 (解决前端收到时间差8小时或者显示为时间戳的问题)
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  # 文件上传限制 (防止学生传太大的图片把服务器撑爆)
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# MyBatis-Plus 全局配置 (公用部分)
+mybatis-plus:
+  type-aliases-package: cn.orangetools.**.entity # 自动扫描实体类别名
+  global-config:
+    banner: false # 启动时不打印 MyBatis-Plus 的横幅，保持日志干净
+    db-config:
+      id-type: auto # 主键策略：默认数据库自增 (也可以选 assign_id 雪花算法)

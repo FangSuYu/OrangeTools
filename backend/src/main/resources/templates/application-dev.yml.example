@@ -7,8 +7,8 @@ spring:
     # serverTimezone=Asia/Shanghai: 防止时区错误
     # allowPublicKeyRetrieval=true: MySQL 8 某些版本连接需要
     url: jdbc:mysql://localhost:3306/orange_tools?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: root # 【请修改】你的数据库账号
-    password: 1234 # 【请修改】你的数据库密码
+    username: 【请修改】你的数据库账号
+    password: 【请修改】你的数据库密码
 
 mybatis-plus:
   configuration:
@@ -21,3 +21,8 @@ logging:
   level:
     root: info
     cn.orangetools: debug # 让咱们自己的包打印 debug 级别的日志
+
+# JWT配置相关
+jwt:
+  secret: 【请修改】你的密钥
+  expiration: 1000 * 60 * 60 * 24

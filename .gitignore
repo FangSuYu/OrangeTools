@@ -57,6 +57,11 @@ target/
 # Exclude Maven help files
 HELP.md
 
+# Ignore actual configuration files (Security)
+backend/src/main/resources/application.yml
+backend/src/main/resources/application-dev.yml
+backend/src/main/resources/application-prod.yml
+
 # ======================================================
 # IDE / Editor
 # ======================================================
