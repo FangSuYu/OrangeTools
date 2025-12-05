@@ -25,11 +25,11 @@ public class JwtUtils {
     // 1. 密钥：这就像印钞厂的母版，绝对不能泄露！
     // 注意：jjwt 0.12.x 要求密钥长度必须足够长（至少32个字符），否则会报错。
     @Value("${jwt.secret}")
-    private static String SECRET_KEY;
+    private String SECRET_KEY;
 
     // 2. Token 有效期：这里设为 24 小时 (毫秒)
     @Value("${jwt.expiration}")
-    private static long EXPIRATION_TIME;
+    private long EXPIRATION_TIME;
 
     // 生成安全密钥对象
     private SecretKey getSigningKey() {

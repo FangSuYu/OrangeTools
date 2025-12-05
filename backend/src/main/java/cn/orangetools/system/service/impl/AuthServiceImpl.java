@@ -1,11 +1,14 @@
 package cn.orangetools.system.service.impl;
 
+import cn.orangetools.common.utils.JwtUtils;
 import cn.orangetools.system.entity.User;
 import cn.orangetools.system.mapper.UserMapper;
+import cn.orangetools.system.model.dto.LoginDto;
 import cn.orangetools.system.model.dto.RegisterDto;
 import cn.orangetools.system.service.AuthService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +26,9 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
 
     @Override
     public String register(RegisterDto registerDto) {
@@ -61,5 +67,25 @@ public class AuthServiceImpl implements AuthService {
         userMapper.insert(user);
 
         return user.getUsername();
+    }
+
+    @Override
+    public String login(LoginDto loginDto) {
+        // 1. 调用 Security 的认证管理器进行认证
+        // 这行代码会自动调用 UserDetailsServiceImpl 查库，并比较密码
+        // 如果密码错误，它会直接抛出 BadCredentialsException 异常
+        authenticationManager.authenticate(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        loginDto.getUsername(),
+                        loginDto.getPassword()
+                )
+        );
+
+        // 2. 如果代码走到这里，说明认证成功了（没抛异常）
+        // 生成 JWT 令牌
+        String token = jwtUtils.generateToken(loginDto.getUsername());
+
+        // 3. 返回 Token
+        return token;
     }
 }
