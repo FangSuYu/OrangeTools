@@ -1,16 +1,24 @@
-# Compiled class file
+############################
+## Java & Maven 常规文件  ##
+############################
+
+# 编译输出
 *.class
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
 
-# Log file
+# 日志文件
 *.log
+hs_err_pid*
+replay_pid*
 
-# BlueJ files
-*.ctxt
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
+############################
+## Java 打包文件           ##
+############################
 *.jar
 *.war
 *.nar
@@ -19,6 +27,47 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+############################
+## 开发工具相关            ##
+############################
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### VS Code ###
+.vscode/
+
+### STS (Spring Tool Suite) ###
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+############################
+## 其他工具               ##
+############################
+
+# BlueJ
+*.ctxt
+
+# MTJ (J2ME Mobile Tools)
+.mtj.tmp/
+
+# 文档
+HELP.md

@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    # MySQL 8.x 驱动
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 【注意】如果是本地数据库，localhost即可
+    # useUnicode=true&characterEncoding=utf-8: 防止中文乱码
+    # serverTimezone=Asia/Shanghai: 防止时区错误
+    # allowPublicKeyRetrieval=true: MySQL 8 某些版本连接需要
+    url: jdbc:mysql://localhost:3306/orange_tools?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root # 【请修改】你的数据库账号
+    password: 1234 # 【请修改】你的数据库密码
+
+mybatis-plus:
+  configuration:
+    # 【开发神器】将 SQL 打印到控制台，方便你看 MyBatis 到底执行了什么 SQL
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 开启驼峰命名转换 (数据库 user_name -> Java userName)
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    root: info
+    cn.orangetools: debug # 让咱们自己的包打印 debug 级别的日志
