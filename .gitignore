@@ -1,46 +1,79 @@
-############################
-## Java & Maven 常规文件  ##
-############################
-
-# 编译输出
-*.class
-target/
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-# 日志文件
+# ======================================================
+# Logs
+# ======================================================
+logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Java crash logs
 hs_err_pid*
 replay_pid*
 
-# Maven Wrapper
+# ======================================================
+# Node / Frontend
+# ======================================================
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.local
+.eslintcache
+*.tsbuildinfo
+
+# Cypress
+/cypress/videos/
+/cypress/screenshots/
+
+# Vitest
+__screenshots__/
+
+# ======================================================
+# Java / Maven / Backend
+# ======================================================
+target/
 .mvn/wrapper/maven-wrapper.jar
 
-############################
-## Java 打包文件           ##
-############################
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Package files
 *.jar
 *.war
-*.nar
 *.ear
 *.zip
 *.tar.gz
 *.rar
 
-############################
-## 开发工具相关            ##
-############################
+# BlueJ
+*.ctxt
 
-### IntelliJ IDEA ###
+# J2ME
+.mtj.tmp/
+
+# Exclude Maven help files
+HELP.md
+
+# ======================================================
+# IDE / Editor
+# ======================================================
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# IntelliJ IDEA
 .idea/
-*.iws
 *.iml
 *.ipr
+*.iws
 
-### VS Code ###
-.vscode/
-
-### STS (Spring Tool Suite) ###
+# STS / Eclipse
 .apt_generated/
 .classpath
 .factorypath
@@ -49,7 +82,7 @@ replay_pid*
 .springBeans
 .sts4-cache/
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -59,15 +92,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-############################
-## 其他工具               ##
-############################
+# ======================================================
+# OS files
+# ======================================================
+.DS_Store
+Thumbs.db
 
-# BlueJ
-*.ctxt
-
-# MTJ (J2ME Mobile Tools)
-.mtj.tmp/
-
-# 文档
-HELP.md
