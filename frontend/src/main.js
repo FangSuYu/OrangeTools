@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+import pinia from '@/stores'
 
 // 1. 先引入 Element Plus 及其样式
 import ElementPlus from 'element-plus'
@@ -11,10 +11,11 @@ import '@/styles/index.scss'
 
 import App from './App.vue'
 import router from './router'
+import '@/router/permission'
 
 const app = createApp(App)
 
-app.use(createPinia())
+app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
 
