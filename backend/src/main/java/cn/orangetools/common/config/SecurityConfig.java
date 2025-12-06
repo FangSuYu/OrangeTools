@@ -64,6 +64,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 下面这些接口，允许匿名访问（不仅是登录，还有Swagger文档等）
                         .requestMatchers("/api/auth/**", "/error").permitAll()
+                        // 【新增】允许匿名访问课表分析接口
+                        .requestMatchers("/api/tools/course/analyze").permitAll()
                         // 其他所有请求，都必须登录后才能访问
                         .anyRequest().authenticated()
                 ).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

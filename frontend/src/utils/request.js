@@ -1,12 +1,11 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
-// 这里我们后面会创建 User Store 来拿 Token，现在先留个注释
-// import { useUserStore } from '@/stores/modules/user'
+// 【1. 解封引用】引入 User Store
+import { useUserStore } from '@/stores/modules/user'
 
 const service = axios.create({
-  // 自动读取刚才定义的 .env 文件里的地址
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 10000 // 请求超时时间 10s
+  timeout: 10000
 })
 
 // =================================
@@ -14,11 +13,12 @@ const service = axios.create({
 // =================================
 service.interceptors.request.use(
   (config) => {
-    // 以后在这里添加 Token
-    // const userStore = useUserStore()
-    // if (userStore.token) {
-    //   config.headers['Authorization'] = 'Bearer ' + userStore.token
-    // }
+    // 【2. 解封逻辑】每次发送请求前，自动带上 Token
+    const userStore = useUserStore()
+    if (userStore.token) {
+      // 注意：后端 JwtFilter 里判断的是 "Bearer " 前缀 (有个空格)
+      config.headers['Authorization'] = 'Bearer ' + userStore.token
+    }
     return config
   },
   (error) => {
@@ -31,32 +31,31 @@ service.interceptors.request.use(
 // =================================
 service.interceptors.response.use(
   (response) => {
-    // 这里的 data 就是后端返回的 Result 对象 { code, msg, data }
     const res = response.data
 
-    // 如果是二进制数据 (比如下载文件)，直接返回
     if (response.config.responseType === 'blob' || response.config.responseType === 'arraybuffer') {
       return res
     }
 
-    // 校验业务状态码 (我们约定 200 是成功)
     if (res.code === 200) {
-      return res.data // 帮调用者剥离掉外壳，直接拿 result.data
+      return res.data
     }
 
-    // 如果 code 不是 200，说明业务出错 (比如用户名已存在)
     ElMessage.error(res.msg || '系统未知错误')
     return Promise.reject(new Error(res.msg || 'Error'))
   },
   (error) => {
-    // 处理 HTTP 状态码错误 (404, 401, 500)
     console.log('err' + error)
     let msg = error.message
     if (error.response) {
-      // 这里可以细化，比如 401 就是 token 过期，强制登出
       if (error.response.status === 401) {
         msg = '登录已过期，请重新登录'
-        // TODO: 执行登出逻辑
+        // 【建议】这里可以加一行：自动登出并跳回登录页
+        const userStore = useUserStore()
+        userStore.logout()
+        location.reload() // 可选：刷新页面
+      } else if (error.response.status === 403) {
+        msg = '无权访问 (403)'
       } else if (error.response.status === 500) {
         msg = '服务器内部错误'
       }

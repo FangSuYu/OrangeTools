@@ -36,8 +36,7 @@ const appStore = useAppStore()
             <el-icon><Tools /></el-icon>
             <span>常用工具</span>
           </template>
-          <el-menu-item index="/tools/electricity">电费查询</el-menu-item>
-          <el-menu-item index="/tools/weather">天气预报</el-menu-item>
+          <el-menu-item index="/tools/course">课表统计助手</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-scrollbar>

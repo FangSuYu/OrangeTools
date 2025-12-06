@@ -15,6 +15,12 @@ const router = createRouter({
           component: () => import('@/views/dashboard/index.vue'),
           name: 'Dashboard',
           meta: { title: '首页', icon: 'House' }
+        },
+        {
+          path: 'tools/course', // 注意路径不要以 / 开头，因为是子路由
+          name: 'CourseTool',
+          component: () => import('@/views/tools/course/index.vue'),
+          meta: { title: '课表统计助手', icon: 'DataAnalysis' } // 这里定义图标
         }
       ]
     },
