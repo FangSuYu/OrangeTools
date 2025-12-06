@@ -12,10 +12,16 @@
   --bg-color-card: #FFFFFF;  /* 卡片背景（纯白） */
   --bg-color-overlay: #FFFFFF; /* 弹窗/下拉菜单背景 */
 
+  /* --- 3. 文字颜色 --- */
   --text-color-primary: #333333; /* 主标题 */
   --text-color-regular: #606266; /* 普通正文 */
   --text-color-secondary: #909399; /* 辅助文字 */
 
+  /* --- 4. 布局尺寸 (【核心修复点】你之前漏了这里！) --- */
+  --header-height: 60px;     /* 顶部导航栏高度 */
+  --sidebar-width: 220px;    /* 侧边栏宽度 */
+
+  /* --- 5. 边框与阴影 --- */
   --border-color: #EBEEF5;   /* 边框颜色 */
   --shadow-color: rgba(0, 0, 0, 0.05); /* 阴影颜色 */
 }

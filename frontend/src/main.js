@@ -1,11 +1,12 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
-// 1. 引入 Element Plus 和 它的 CSS 样式
+// 1. 先引入 Element Plus 及其样式
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 
-// 【新增】引入全局样式
+// 2. 引入我们的全局样式
+// 这一行非常重要！它包含了 reset.scss 和 theme.scss (定义了所有变量)
 import '@/styles/index.scss'
 
 import App from './App.vue'
@@ -15,8 +16,6 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-
-// 2. 告诉 Vue 使用 Element Plus
 app.use(ElementPlus)
 
 app.mount('#app')
