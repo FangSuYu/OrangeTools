@@ -5,6 +5,9 @@ import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 
+// 【新增】引入全局样式
+import '@/styles/index.scss'
+
 import App from './App.vue'
 import router from './router'
 

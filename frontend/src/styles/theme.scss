@@ -1,0 +1,54 @@
+/* ==============================================
+   主题配置中心 (Light & Dark)
+   ============================================== */
+:root {
+  /* --- 1. 品牌色 (活力橙) - 保持不变 --- */
+  --el-color-primary: #ff9900;
+  --el-color-primary-light-3: #ffb84d;
+  --el-color-primary-dark-2: #cc7a00;
+
+  /* --- 2. 亮色模式 (Light Mode) 变量 --- */
+  --bg-color-page: #F4F7FA;  /* 全局大背景（淡蓝灰） */
+  --bg-color-card: #FFFFFF;  /* 卡片背景（纯白） */
+  --bg-color-overlay: #FFFFFF; /* 弹窗/下拉菜单背景 */
+
+  --text-color-primary: #333333; /* 主标题 */
+  --text-color-regular: #606266; /* 普通正文 */
+  --text-color-secondary: #909399; /* 辅助文字 */
+
+  --border-color: #EBEEF5;   /* 边框颜色 */
+  --shadow-color: rgba(0, 0, 0, 0.05); /* 阴影颜色 */
+}
+
+/* --- 3. 暗黑模式 (Dark Mode) 变量 --- */
+/* 当 html 标签上有 class="dark" 时，下面的变量会生效 */
+html.dark {
+  /* 品牌色通常不需要大改，但在深色背景下可能需要微调，这里暂时保持一致 */
+
+  /* 背景色变深 */
+  --bg-color-page: #0a0a0a;  /* 极深灰（接近黑） */
+  --bg-color-card: #141414;  /* 卡片背景（深灰） */
+  --bg-color-overlay: #1d1e1f;
+
+  /* 文字色变浅 */
+  --text-color-primary: #E5EAF3;
+  --text-color-regular: #A3A6AD;
+  --text-color-secondary: #6C6E72;
+
+  /* 边框和阴影调整 */
+  --border-color: #2C2D2E;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* --- 4. 覆盖 Element Plus 默认样式 (让组件也支持暗黑) --- */
+/* 这一步很重要，Element Plus 自身也依赖这些 css 变量 */
+html.dark {
+  --el-bg-color: var(--bg-color-card);
+  --el-bg-color-page: var(--bg-color-page);
+  --el-bg-color-overlay: var(--bg-color-overlay);
+
+  --el-text-color-primary: var(--text-color-primary);
+  --el-text-color-regular: var(--text-color-regular);
+  --el-border-color: var(--border-color);
+  --el-border-color-light: var(--border-color);
+}

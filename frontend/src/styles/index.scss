@@ -1,0 +1,16 @@
+@import './reset.scss';
+@import './theme.scss';
+
+/* 这里以后可以写一些全局通用的工具类，比如： */
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card-box {
+  background: var(--bg-color-card);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  padding: 20px;
+}
