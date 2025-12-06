@@ -17,6 +17,13 @@ const router = createRouter({
           meta: { title: '首页', icon: 'House' }
         }
       ]
+    },
+    //【新增】登录注册页 (全屏，不带侧边栏)
+    {
+      path: '/login',
+      name: 'Login',
+      component: () => import('@/views/auth/index.vue'), // 我们马上创建这个文件
+      meta: { title: '登录 - OrangeTools' }
     }
   ]
 })
