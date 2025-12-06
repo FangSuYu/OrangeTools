@@ -5,6 +5,7 @@ import cn.orangetools.system.model.dto.LoginDto;
 import cn.orangetools.system.model.dto.RegisterDto;
 import cn.orangetools.system.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,8 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
  * @license GPL-3.0 License
  */
 @RestController
-@RequestMapping("api/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
@@ -34,13 +36,10 @@ public class AuthController {
      */
     @PostMapping("/register")
     public Result<String> register(@RequestBody RegisterDto registerDto) {
-        try {
-            String username = authService.register(registerDto);
-            return Result.success(username);
-        } catch (RuntimeException e) {
-            // 如果 Service 层抛出了 "用户名已存在" 等异常，这里捕获并返回错误信息
-            return Result.error(e.getMessage());
-        }
+        log.info("auth-正在注册的用户：【{}】", registerDto.getUsername());
+        String username = authService.register(registerDto);
+        log.info("auth-注册成功，用户名：【{}】", username);
+        return Result.success(username);
     }
 
     /**
@@ -50,22 +49,10 @@ public class AuthController {
      */
     @PostMapping("/login")
     public Result<String> login(@RequestBody LoginDto loginDto) {
-        try {
-            // 尝试登录
-            String token = authService.login(loginDto);
-            // 登录成功
-            return Result.success(token);
-        } catch (BadCredentialsException e) {
-            // 1. 捕获密码错误异常
-            return Result.error("账号或密码错误");
-        } catch (InternalAuthenticationServiceException e) {
-            // 2. 捕获用户不存在异常 (有时候 Security 会抛这个)
-            return Result.error("账号不存在");
-        } catch (Exception e) {
-            // 3. 捕获其他未知异常 (比如数据库挂了)
-            e.printStackTrace(); // 打印到控制台方便调试
-            return Result.error("登录失败，系统繁忙");
-        }
+        log.info("auth-正在登录的用户：【{}】", loginDto.getUsername());
+        String token = authService.login(loginDto);
+        log.info("auth-登录成功，用户名：【{}】", loginDto.getUsername());
+        return Result.success(token);
     }
 
 }

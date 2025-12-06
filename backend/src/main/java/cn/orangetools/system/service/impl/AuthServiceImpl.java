@@ -1,5 +1,6 @@
 package cn.orangetools.system.service.impl;
 
+import cn.orangetools.common.exception.ServiceException;
 import cn.orangetools.common.utils.JwtUtils;
 import cn.orangetools.system.entity.User;
 import cn.orangetools.system.mapper.UserMapper;
@@ -38,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
                 .eq(User::getUsername, registerDto.getUsername()));
 
         if (count > 0) {
-            throw new RuntimeException("用户名已存在");
+            throw new ServiceException("用户名已存在");
         }
 
         // 2. 如果填了学号，也要检查学号是否重复
@@ -46,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
             Long stuCount = userMapper.selectCount(new LambdaQueryWrapper<User>()
                     .eq(User::getStudentId, registerDto.getStudentId()));
             if (stuCount > 0) {
-                throw new RuntimeException("该学号已被绑定");
+                throw new ServiceException("该学号已被绑定");
             }
         }
 
