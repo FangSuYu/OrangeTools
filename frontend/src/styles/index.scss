@@ -1,7 +1,17 @@
 @import './reset.scss';
 @import './theme.scss';
 
-/* 这里以后可以写一些全局通用的工具类，比如： */
+/* 【核心修复】全局应用主题变量 */
+body {
+  /* 让网页背景色跟随主题 */
+  background-color: var(--bg-color-page);
+  /* 让网页文字颜色跟随主题 */
+  color: var(--text-color-primary);
+  /* 增加丝滑过渡，切换时不会太生硬 */
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* 通用工具类 */
 .flex-center {
   display: flex;
   justify-content: center;
@@ -11,6 +21,6 @@
 .card-box {
   background: var(--bg-color-card);
   border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 12px var(--shadow-color); /* 这里顺便修一下阴影变量 */
   padding: 20px;
 }
