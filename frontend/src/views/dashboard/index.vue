@@ -51,10 +51,10 @@ const shortcuts = ref([
     id: 'profile',
     title: '个人中心',
     desc: '资料与设置',
-    path: '/', // 暂时跳首页
+    path: '/profile', // 暂时跳首页
     icon: User,
     colorClass: 'profile',
-    tip: 'Coming Soon...'
+    // tip: '立即进入'
   }
 ])
 
@@ -124,7 +124,7 @@ onMounted(() => {
     <div class="welcome-card">
       <div class="welcome-left">
         <div class="avatar-box">
-          <el-avatar :size="70" :src="userStore.avatar" icon="UserFilled" class="user-avatar" />
+          <el-avatar :size="70" :src="userStore.avatarUrl" icon="UserFilled" class="user-avatar" />
         </div>
         <div class="welcome-text">
           <h2 class="greet">

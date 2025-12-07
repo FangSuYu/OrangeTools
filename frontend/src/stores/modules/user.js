@@ -1,58 +1,73 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import { login as loginApi, getUserInfo as getUserInfoApi } from '@/api/auth' // 确保你api里有这个
-import { ElMessage } from 'element-plus'
+import { ref, computed } from 'vue'
+import { login as loginApi, getUserInfo as getUserInfoApi } from '@/api/auth'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref('')
   const username = ref('')
-  const avatar = ref('')
-  const role = ref('') // 用户角色
+  const nickname = ref('')
+  const studentId = ref('')
+  const avatar = ref('') // 这里存的是数据库里的文件名，如 "avatar-1.png"
+  const role = ref('')
+  const phone = ref('')
+  const email = ref('')
 
-  // 登录 Action
+  // 【核心修复】计算属性：将文件名转换为真实路径
+  const avatarUrl = computed(() => {
+    // 1. 如果没头像，给个默认的
+    if (!avatar.value) return 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+
+    // 2. 如果是网络图片 (http开头)，直接返回
+    if (avatar.value.startsWith('http')) return avatar.value
+
+    // 3. 如果是本地预设图片，动态解析路径
+    // 注意：这里假设你的图片都在 src/assets/images/avatars/ 下
+    try {
+      return new URL(`../../assets/images/avatars/${avatar.value}`, import.meta.url).href
+    } catch (e) {
+      return 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+    }
+  })
+
   const login = async (loginForm) => {
     try {
       const res = await loginApi(loginForm)
-      token.value = res // 存 Token
-
-      // 【关键】登录成功后，立刻获取用户信息(包含角色)
+      token.value = res
       await getInfo()
-
       return true
     } catch (error) {
       return false
     }
   }
 
-  // 获取用户信息 Action
   const getInfo = async () => {
     try {
       const res = await getUserInfoApi()
       username.value = res.username
+      nickname.value = res.nickname
+      studentId.value = res.studentId
       avatar.value = res.avatar
-      // 【核心修复】强制转为小写，防止后端返回 ADMIN 导致前端判断失效
       role.value = res.role ? res.role.toLowerCase() : 'user'
+      phone.value = res.phone
+      email.value = res.email
     } catch (error) {
       console.error('获取用户信息失败', error)
     }
   }
 
-  // 登出 Action
   const logout = () => {
     token.value = ''
     username.value = ''
+    studentId.value = ''
+    nickname.value = ''
+    avatar.value = ''
     role.value = ''
-    // 持久化插件会自动清理 LocalStorage
   }
 
   return {
-    token,
-    username,
-    avatar,
-    role,
-    login,
-    getInfo, // 导出这个方法，以便在页面刷新时也可以调用
-    logout
+    token, username, nickname, studentId, avatar, role, phone, email,
+    avatarUrl, // 【导出这个计算属性】
+    login, getInfo, logout
   }
 }, {
   persist: true

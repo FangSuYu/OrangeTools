@@ -33,6 +33,13 @@ const router = createRouter({
           name: 'Contributors',
           component: () => import('@/views/community/contributors/index.vue'),
           meta: { title: '贡献者墙', icon: 'Medal' }
+        },
+        {
+          path: '/profile', // 访问路径
+          name: 'Profile',
+          component: () => import('@/views/profile/index.vue'),
+          meta: { title: '个人中心', icon: 'User' },
+          hidden: true // 【关键】加上这个属性，侧边栏就不会渲染出这个菜单
         }
       ]
     },

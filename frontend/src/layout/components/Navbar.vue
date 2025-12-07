@@ -80,7 +80,7 @@ const isLast = (index) => {
         <div class="avatar-wrapper">
           <el-avatar
             :size="30"
-            :src="userStore.avatar || 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'"
+            :src="userStore.avatarUrl || 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'"
           />
           <span class="username">{{ userStore.username || '用户' }}</span>
           <el-icon class="el-icon--right"><CaretBottom /></el-icon>
@@ -88,7 +88,7 @@ const isLast = (index) => {
 
         <template #dropdown>
           <el-dropdown-menu>
-            <router-link to="/">
+            <router-link to="/profile">
               <el-dropdown-item>个人中心</el-dropdown-item>
             </router-link>
             <a target="_blank" href="https://github.com/FangSuYu/OrangeTools">
