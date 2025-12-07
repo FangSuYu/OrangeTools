@@ -18,6 +18,12 @@ import java.util.Set;
 public class AnalysisResult {
     private Integer totalPeople;
 
+    // 最大周次 (用于前端生成下拉框，比如 20)
+    private Integer maxWeek;
+
+    // 全量原始数据
+    private List<StudentSchedule> data;
+
     // 所有参与分析的学生列表 (用于前端做筛选下拉框的“数据源”)
     private List<StudentInfo> allStudents;
 
@@ -26,6 +32,5 @@ public class AnalysisResult {
     private Set<String> allMajors;   // 涉及到的所有专业
     private Set<String> allGrades;   // 涉及到的所有年级
 
-    // 核心课表数据
-    private Map<Integer, Map<Integer, CourseCell>> schedule;
+
 }

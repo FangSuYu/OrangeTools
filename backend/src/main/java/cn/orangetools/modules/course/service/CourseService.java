@@ -1,9 +1,7 @@
 package cn.orangetools.modules.course.service;
 
 import cn.orangetools.common.exception.ServiceException;
-import cn.orangetools.modules.course.model.AnalysisResult;
-import cn.orangetools.modules.course.model.CourseCell;
-import cn.orangetools.modules.course.model.StudentInfo;
+import cn.orangetools.modules.course.model.*;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
@@ -35,29 +33,33 @@ public class CourseService {
         }
 
         AnalysisResult result = new AnalysisResult();
-        Set<StudentInfo> allStudents = new HashSet<>();
+        // 临时存储：StudentInfo -> StudentSchedule
+        // 用 Map 方便我们在解析过程中随时把课程塞给对应的学生
+        Map<StudentInfo, StudentSchedule> scheduleMap = new HashMap<>();
 
         Set<String> allColleges = new HashSet<>();
         Set<String> allMajors = new HashSet<>();
         Set<String> allGrades = new HashSet<>();
 
-        // 初始化日程表 (10行 * 7列)
-        Map<Integer, Map<Integer, CourseCell>> schedule = initEmptySchedule();
+        // 全局最大周次，默认为 20，解析过程中动态更新
+        final int[] maxWeekRef = {20};
 
         for (MultipartFile file : files) {
             try {
-                // 使用智能解析器
-                new ExcelParser(file, allStudents, schedule).parse();
+                // 解析器
+                new ExcelParser(file, scheduleMap, maxWeekRef).parse();
             } catch (Exception e) {
                 log.error("解析异常: " + file.getOriginalFilename(), e);
             }
         }
 
-        // 组装返回结果
-        result.setTotalPeople(allStudents.size());
-        result.setAllStudents(new ArrayList<>(allStudents));
+        // 组装结果
+        result.setTotalPeople(scheduleMap.size());
+        result.setMaxWeek(maxWeekRef[0]);
+        result.setData(new ArrayList<>(scheduleMap.values())); // 转为 List
 
-        for (StudentInfo s : allStudents) {
+        // 提取元数据
+        for (StudentInfo s : scheduleMap.keySet()) {
             if (s.getCollege() != null) allColleges.add(s.getCollege());
             if (s.getMajor() != null) allMajors.add(s.getMajor());
             if (s.getGrade() != null) allGrades.add(s.getGrade());
@@ -65,42 +67,26 @@ public class CourseService {
         result.setAllColleges(allColleges);
         result.setAllMajors(allMajors);
         result.setAllGrades(allGrades);
-        result.setSchedule(schedule);
 
         return result;
     }
 
-    private Map<Integer, Map<Integer, CourseCell>> initEmptySchedule() {
-        Map<Integer, Map<Integer, CourseCell>> map = new HashMap<>();
-        for (int i = 1; i <= 10; i++) {
-            Map<Integer, CourseCell> weekMap = new HashMap<>();
-            for (int j = 1; j <= 7; j++) {
-                weekMap.put(j, new CourseCell()); // 初始化 1-7 (周一到周日)
-            }
-            map.put(i, weekMap);
-        }
-        return map;
-    }
-
     /**
-     * 智能 Excel 解析器
-     * 特性：自动寻找 "星期一" 定位列，自动寻找数据起始行
+     * 解析器内部类
      */
     private class ExcelParser extends AnalysisEventListener<Map<Integer, String>> {
         private final MultipartFile file;
-        private final Set<StudentInfo> allStudents;
-        private final Map<Integer, Map<Integer, CourseCell>> schedule;
+        private final Map<StudentInfo, StudentSchedule> scheduleMap;
+        private final int[] maxWeekRef;
 
         private StudentInfo currentStudent = null;
+        private Integer mondayColIndex = null;
+        private Integer dataStartRowIndex = null;
 
-        // 智能定位坐标
-        private Integer mondayColIndex = null; // "星期一" 在第几列
-        private Integer dataStartRowIndex = null; // 数据从第几行开始 (表头下一行)
-
-        public ExcelParser(MultipartFile file, Set<StudentInfo> allStudents, Map<Integer, Map<Integer, CourseCell>> schedule) {
+        public ExcelParser(MultipartFile file, Map<StudentInfo, StudentSchedule> scheduleMap, int[] maxWeekRef) {
             this.file = file;
-            this.allStudents = allStudents;
-            this.schedule = schedule;
+            this.scheduleMap = scheduleMap;
+            this.maxWeekRef = maxWeekRef;
         }
 
         public void parse() throws IOException {
@@ -111,58 +97,54 @@ public class CourseService {
         public void invoke(Map<Integer, String> rowData, AnalysisContext context) {
             int rowIndex = context.readRowHolder().getRowIndex();
 
-            // --- 阶段 1: 提取个人信息 (第3行, Index 2) ---
+            // 1. 提取个人信息 (第3行)
             if (rowIndex == 2) {
                 StringBuilder rawTextBuilder = new StringBuilder();
                 for (String val : rowData.values()) {
                     if (val != null) rawTextBuilder.append(val).append(" ");
                 }
                 this.currentStudent = extractStudentInfo(rawTextBuilder.toString());
-                allStudents.add(this.currentStudent);
+                // 如果 Map 里还没有这个学生，初始化一个
+                scheduleMap.putIfAbsent(this.currentStudent, new StudentSchedule(this.currentStudent, new ArrayList<>()));
                 return;
             }
 
-            // --- 阶段 2: 寻找表头锚点 (寻找 "星期一") ---
+            // 2. 寻找锚点 "星期一"
             if (mondayColIndex == null) {
                 for (Map.Entry<Integer, String> entry : rowData.entrySet()) {
-                    String val = entry.getValue();
-                    if (val != null && val.contains("星期一")) {
-                        // 找到了锚点！
+                    if (entry.getValue() != null && entry.getValue().contains("星期一")) {
                         mondayColIndex = entry.getKey();
-                        dataStartRowIndex = rowIndex + 1; // 数据从下一行开始
-                        log.info("文件[{}] 定位成功: 星期一在第 {} 列, 数据从第 {} 行开始",
-                                file.getOriginalFilename(), mondayColIndex, dataStartRowIndex);
+                        dataStartRowIndex = rowIndex + 1;
                         break;
                     }
                 }
-                return; // 这一行是表头，不用处理数据，直接返回
+                return;
             }
 
-            // --- 阶段 3: 提取课表数据 ---
-            // 只有当锚点找到，且当前行在数据范围内 (10节课) 时才处理
+            // 3. 提取数据
             if (mondayColIndex != null && dataStartRowIndex != null) {
                 if (rowIndex >= dataStartRowIndex && rowIndex < dataStartRowIndex + 10) {
+                    int slotIndex = rowIndex - dataStartRowIndex + 1; // 第几节 (1-10)
 
-                    int slotIndex = rowIndex - dataStartRowIndex + 1; // 算出当前是第几节 (1-10)
-
-                    // 遍历周一(1) 到 周日(7)
                     for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
-                        // 实际列索引 = 星期一的索引 + 偏移量
                         int actualColIndex = mondayColIndex + dayOffset;
                         String cellContent = rowData.get(actualColIndex);
 
-                        // 忙碌判定
-                        boolean isBusy = isEffectiveCourse(cellContent);
+                        // 解析出这节课所有的忙碌周次
+                        List<Integer> busyWeeks = parseWeeksFromCell(cellContent);
 
-                        // 更新日程表 (dayOfWeek: 1=周一, 7=周日)
-                        int dayOfWeek = dayOffset + 1;
-                        CourseCell cell = schedule.get(slotIndex).get(dayOfWeek);
+                        // 如果有忙碌周次，就记录下来
+                        if (!busyWeeks.isEmpty()) {
+                            // 更新全局最大周次
+                            for (Integer w : busyWeeks) {
+                                if (w > maxWeekRef[0]) maxWeekRef[0] = w;
+                            }
 
-                        if (this.currentStudent != null) {
-                            if (isBusy) {
-                                cell.addBusy(this.currentStudent);
-                            } else {
-                                cell.addFree(this.currentStudent);
+                            // 存入当前学生的课表
+                            if (this.currentStudent != null) {
+                                StudentSchedule schedule = scheduleMap.get(this.currentStudent);
+                                // Day 是 1-7
+                                schedule.addCourse(new RawCourseItem(dayOffset + 1, slotIndex, busyWeeks));
                             }
                         }
                     }
@@ -173,32 +155,73 @@ public class CourseService {
         @Override
         public void doAfterAllAnalysed(AnalysisContext context) {}
 
-        // 判定是否是有效课程
-        private boolean isEffectiveCourse(String content) {
-            if (content == null) return false;
-            String text = content.trim();
-            // 排除无意义字符
-            if (text.length() <= 1) return false;
-            // 排除特定的空闲标识
-            if (text.contains("无课") || text.contains("时间段空闲")) return false;
-            return true;
+        /**
+         * 【核心算法升级】从单元格内容中解析出所有忙碌的周次列表
+         * 返回: [1, 2, 3, 4, 8, 9] 这种列表
+         */
+        private List<Integer> parseWeeksFromCell(String content) {
+            List<Integer> result = new ArrayList<>();
+            if (content == null || content.trim().length() <= 1) return result;
+            if (content.contains("无课") || content.contains("时间段空闲")) return result;
+
+            // 1. 切割课程 (省略号分隔)
+            String[] courses = content.split("[…。\\.]+");
+
+            for (String course : courses) {
+                if (course.trim().isEmpty()) continue;
+
+                // 2. 提取周次字符串
+                Pattern pattern = Pattern.compile("[【\\[](.*?)[周\\]】]");
+                Matcher matcher = pattern.matcher(course);
+
+                if (matcher.find()) {
+                    String weekStr = matcher.group(1); // "2-6,8"
+                    List<Integer> parsed = expandWeeks(weekStr);
+                    result.addAll(parsed);
+                } else {
+                    // 没写周次，默认 1-20 周都忙 (兜底策略)
+                    for (int i = 1; i <= 20; i++) result.add(i);
+                }
+            }
+            return result;
         }
 
+        /**
+         * 展开周次字符串
+         * "2-4,6" -> [2, 3, 4, 6]
+         */
+        private List<Integer> expandWeeks(String weekStr) {
+            List<Integer> list = new ArrayList<>();
+            try {
+                String[] parts = weekStr.split("[,，]");
+                for (String part : parts) {
+                    if (part.contains("-")) {
+                        String[] range = part.split("-");
+                        int start = Integer.parseInt(range[0]);
+                        int end = Integer.parseInt(range[1]);
+                        for (int i = start; i <= end; i++) list.add(i);
+                    } else {
+                        list.add(Integer.parseInt(part));
+                    }
+                }
+            } catch (Exception e) {
+                // 解析失败忽略
+            }
+            return list;
+        }
+
+        // ... (extractStudentInfo 和 getValueByRegex 保持不变，请直接保留你上一次的代码) ...
+        // 为了篇幅我不重复贴 extractStudentInfo 了，它不需要变
         private StudentInfo extractStudentInfo(String text) {
             StudentInfo info = new StudentInfo();
             String cleanText = text.replaceAll("：", ":").replaceAll("\\s+", " ");
-
             info.setName(getValueByRegex(cleanText, "姓名:(\\S+)"));
             info.setGrade(getValueByRegex(cleanText, "年级:(\\S+)"));
             info.setCollege(getValueByRegex(cleanText, "院系:(\\S+)"));
             info.setMajor(getValueByRegex(cleanText, "专业:(\\S+)"));
-
-            // 你的特定需求：不解析数字作为学号
             String explicitCode = getValueByRegex(cleanText, "学号[:：](\\w+)");
             info.setCode(explicitCode != null ? explicitCode : "");
             info.setClassName("");
-
-            // 兜底姓名
             if (info.getName() == null) {
                 String filename = file.getOriginalFilename();
                 if (filename != null && filename.contains(".")) {
