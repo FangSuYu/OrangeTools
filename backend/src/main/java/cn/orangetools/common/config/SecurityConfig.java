@@ -66,6 +66,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/error").permitAll()
                         // 【新增】允许匿名访问课表分析接口
                         .requestMatchers("/api/tools/course/analyze").permitAll()
+                        // 禁止用户匿名提交需求和反馈
+                        .requestMatchers("/api/community/feedback/submit").authenticated()
+                        // 允许所有人查看统计、看墙、点赞
+                        .requestMatchers("/api/community/**").permitAll()
                         // 其他所有请求，都必须登录后才能访问
                         .anyRequest().authenticated()
                 ).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

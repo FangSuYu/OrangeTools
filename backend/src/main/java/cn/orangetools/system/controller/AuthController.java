@@ -1,6 +1,7 @@
 package cn.orangetools.system.controller;
 
 import cn.orangetools.common.result.Result;
+import cn.orangetools.system.entity.User;
 import cn.orangetools.system.model.dto.LoginDto;
 import cn.orangetools.system.model.dto.RegisterDto;
 import cn.orangetools.system.service.AuthService;
@@ -8,10 +9,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author YuHeng
@@ -53,6 +53,18 @@ public class AuthController {
         String token = authService.login(loginDto);
         log.info("auth-登录成功，用户名：【{}】", loginDto.getUsername());
         return Result.success(token);
+    }
+
+    /**
+     * 获取用户信息
+     * @return 用户信息
+     */
+    @GetMapping("/info")
+    public Result<User> getUserInfo() {
+        String username = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
+        User user = authService.getUserByUsername(username); // 需要你在 AuthService 加这个方法，或者直接调 Mapper
+        user.setPassword(null); // 抹除密码
+        return Result.success(user);
     }
 
 }

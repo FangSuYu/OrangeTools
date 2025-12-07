@@ -1,7 +1,7 @@
 <script setup>
 import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/modules/app'
-import { Monitor, Tools } from '@element-plus/icons-vue'
+import { Monitor, Tools , ChatLineSquare, Medal} from '@element-plus/icons-vue'
 // 引入我们强大的新 Logo 组件
 import Logo from './Logo.vue'
 
@@ -38,6 +38,14 @@ const appStore = useAppStore()
           </template>
           <el-menu-item index="/tools/course">课表统计助手</el-menu-item>
         </el-sub-menu>
+        <el-menu-item index="/community/feedback">
+          <el-icon><ChatLineSquare /></el-icon>
+          <template #title>需求许愿墙</template>
+        </el-menu-item>
+        <el-menu-item index="/community/contributors">
+          <el-icon><Medal /></el-icon>
+          <template #title>贡献者墙</template>
+        </el-menu-item>
       </el-menu>
     </el-scrollbar>
   </div>

@@ -32,6 +32,9 @@ importers:
       vue:
         specifier: ^3.5.25
         version: 3.5.25
+      vue-countup-v3:
+        specifier: ^1.4.2
+        version: 1.4.2(vue@3.5.25)
       vue-i18n:
         specifier: ^11.2.2
         version: 11.2.2(vue@3.5.25)
@@ -916,6 +919,9 @@ packages:
     resolution: {integrity: sha512-7Vv6asjS4gMOuILabD3l739tsaxFQmC+a7pLZm02zyvs8p977bL3zEgq3yDk5rn9B0PbYgIv++jmHcuUab4RhA==}
     engines: {node: '>=18'}
 
+  countup.js@2.9.0:
+    resolution: {integrity: sha512-llqrvyXztRFPp6+i8jx25phHWcVWhrHO4Nlt0uAOSKHB8778zzQswa4MU3qKBvkXfJKftRYFJuVHez67lyKdHg==}
+
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
@@ -1653,6 +1659,11 @@ packages:
         optional: true
       yaml:
         optional: true
+
+  vue-countup-v3@1.4.2:
+    resolution: {integrity: sha512-nRC65jBcdgwybxqztgd/WaK8ZN5T9ECPyiCFGYFMewCsvqdRVo1CtpT7JREcPNF837Fgu/izTSFiuzrIGD6w0A==}
+    peerDependencies:
+      vue: ^3.0.0
 
   vue-demi@0.14.10:
     resolution: {integrity: sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==}
@@ -2520,6 +2531,8 @@ snapshots:
     dependencies:
       is-what: 5.5.0
 
+  countup.js@2.9.0: {}
+
   cross-spawn@7.0.6:
     dependencies:
       path-key: 3.1.1
@@ -3209,6 +3222,11 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
       sass: 1.94.2
+
+  vue-countup-v3@1.4.2(vue@3.5.25):
+    dependencies:
+      countup.js: 2.9.0
+      vue: 3.5.25
 
   vue-demi@0.14.10(vue@3.5.25):
     dependencies:

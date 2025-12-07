@@ -21,6 +21,18 @@ const router = createRouter({
           name: 'CourseTool',
           component: () => import('@/views/tools/course/index.vue'),
           meta: { title: '课表统计助手', icon: 'DataAnalysis' } // 这里定义图标
+        },
+        {
+          path: 'community/feedback',
+          name: 'Feedback',
+          component: () => import('@/views/community/feedback/index.vue'),
+          meta: { title: '需求许愿墙', icon: 'ChatLineSquare' }
+        },
+        {
+          path: 'community/contributors',
+          name: 'Contributors',
+          component: () => import('@/views/community/contributors/index.vue'),
+          meta: { title: '贡献者墙', icon: 'Medal' }
         }
       ]
     },

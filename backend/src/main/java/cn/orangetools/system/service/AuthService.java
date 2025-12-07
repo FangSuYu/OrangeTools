@@ -1,5 +1,6 @@
 package cn.orangetools.system.service;
 
+import cn.orangetools.system.entity.User;
 import cn.orangetools.system.model.dto.LoginDto;
 import cn.orangetools.system.model.dto.RegisterDto;
 
@@ -25,4 +26,10 @@ public interface AuthService {
      * @return JWT Token 字符串
      */
     String login(LoginDto loginDto);
+
+    /**
+     * 获取用户的信息
+     * @return 用户的信息
+     */
+    User getUserByUsername(String username);
 }

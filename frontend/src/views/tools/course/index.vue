@@ -1,9 +1,11 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { UploadFilled, DataAnalysis, Delete, Search, Document, CopyDocument } from '@element-plus/icons-vue'
 import { ElIcon, ElMessage, ElMessageBox } from 'element-plus'
 import { analyzeCourse } from '@/api/tools/course'
 import { useCourseStore } from '@/stores/modules/course'
+import { getToolStats, reportToolUsage } from '@/api/community'
+import CountUp from 'vue-countup-v3'
 
 const courseStore = useCourseStore()
 
@@ -12,7 +14,7 @@ const loading = ref(false)
 const uploadRef = ref(null)
 const fileList = ref([])
 const viewMode = ref('list')
-const usageCount = ref(1284)
+const usageCount = ref(0)// 默认为 0，等待加载
 const currentWeek = ref(1)
 
 // 【自定义】教程链接 (你可以替换成你真实的飞书文档链接)
@@ -112,6 +114,9 @@ const handleAnalyze = async () => {
     courseStore.setAnalysisResult(res)
     ElMessage.success(`分析完成！已加载全学期数据`)
     fileList.value = []
+    reportToolUsage('course_tool').then(() => {
+      usageCount.value++ // 前端手动+1，给用户即时反馈
+    })
   } catch (error) {
     console.error(error)
   } finally {
@@ -190,6 +195,20 @@ const handleCopyWeek = async () => {
     ElMessage.error('复制失败',err)
   }
 }
+
+onMounted(async () => {
+  try {
+    const res = await getToolStats()
+    // 后端返回的是 List<Tool>，我们需要找到 course_tool 这一项
+    const tool = res.find(t => t.code === 'course_tool')
+    if (tool) {
+      usageCount.value = tool.usageCount
+    }
+  } catch (e) {
+    console.error('获取统计失败', e)
+  }
+})
+
 </script>
 
 <template>
@@ -203,7 +222,7 @@ const handleCopyWeek = async () => {
             <el-icon><Document /></el-icon> 查看使用教程
           </el-link>
         </p>
-        <div class="stats-badge">🔥 已累计服务 <span>{{ usageCount }}</span> 人次</div>
+        <div class="stats-badge">🔥 已累计服务 <span><count-up :end-val="usageCount" :duration="2.5" /></span> 人次</div>
       </div>
     </div>
 
@@ -346,12 +365,49 @@ const handleCopyWeek = async () => {
 .app-container { max-width: 1200px; margin: 0 auto; padding-bottom: 50px; }
 
 .tool-header {
-  text-align: center; margin-bottom: 30px;
+  text-align: center;
+  margin-bottom: 30px;
   .header-content {
     h1 { margin-bottom: 10px; color: var(--text-color-primary); }
     .desc { color: var(--text-color-secondary); margin-bottom: 15px; }
-    .tutorial-link { font-size: 14px; margin-left: 10px; vertical-align: baseline; }
-    .stats-badge { display: inline-block; background: var(--el-color-primary-light-9); color: var(--el-color-primary); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; span { font-size: 16px; } }
+
+    .stats-badge {
+      display: inline-flex; /* 强制在一行 */
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+
+      /* 【修复重点】 */
+      /* 1. 默认(亮色): 使用填充色(浅灰)，适配性最好 */
+      background: var(--el-fill-color);
+      color: var(--text-color-regular); /* 文字用常规色，不要太亮 */
+
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px solid var(--border-color); /* 边框也跟随主题 */
+
+      span {
+        font-size: 16px;
+        font-family: 'Helvetica Neue', sans-serif;
+        color: var(--el-color-primary); /* 数字保持品牌色高亮 */
+        margin: 0 2px;
+      }
+    }
+
+    /* 单独针对暗黑模式微调 (保险起见) */
+    /* 当 html 有 dark 类时，强制背景为深色 */
+    :deep(html.dark) & .stats-badge {
+       background: #262727;
+       border-color: #4c4d4f;
+    }
+
+    .tutorial-link {
+      font-size: 14px; margin-left: 10px; vertical-align: baseline;
+      cursor: pointer;
+      &:hover { text-decoration: underline; }
+    }
   }
 }
 

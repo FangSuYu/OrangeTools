@@ -89,4 +89,10 @@ public class AuthServiceImpl implements AuthService {
         // 3. 返回 Token
         return token;
     }
+
+    @Override
+    public User getUserByUsername(String username) {
+        return userMapper.selectOne(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, username));
+    }
 }
