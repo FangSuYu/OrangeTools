@@ -1,15 +1,17 @@
 <script setup>
 import { useAppStore } from '@/stores/modules/app'
 import { useUserStore } from '@/stores/modules/user'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
-import { CaretBottom } from '@element-plus/icons-vue' // 引入下箭头图标
+import { CaretBottom } from '@element-plus/icons-vue'
 import ThemeSwitch from '@/components/ThemeSwitch/index.vue'
 import Hamburger from '@/components/Hamburger/index.vue'
+import { computed } from 'vue'
 
 const appStore = useAppStore()
 const userStore = useUserStore()
 const router = useRouter()
+const route = useRoute()
 
 function toggleSideBar() {
   appStore.toggleSidebar()
@@ -22,11 +24,28 @@ const handleLogout = () => {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    // 1. 清理 Pinia 和 LocalStorage
     userStore.logout()
-    // 2. 跳转回登录页 (带上当前页面的路径，方便登录后跳回来，虽然现在是 dashboard)
     router.push(`/login?redirect=${router.currentRoute.value.fullPath}`)
   }).catch(() => {})
+}
+
+// 面包屑逻辑：动态计算当前路径
+const breadcrumbs = computed(() => {
+  // 过滤出有 meta.title 的路由记录
+  const matched = route.matched.filter(item => item.meta && item.meta.title)
+  const first = matched[0]
+
+  // 如果第一个不是 Dashboard，我们手动加一个 "主控台" 在前面作为根节点
+  if (first && first.path !== '/dashboard') {
+    return [{ title: '主控台', path: '/dashboard' }, ...matched]
+  }
+
+  return matched
+})
+
+// 判断是否是面包屑的最后一项（不可点击）
+const isLast = (index) => {
+  return index === breadcrumbs.value.length - 1
 }
 </script>
 
@@ -40,9 +59,18 @@ const handleLogout = () => {
         @toggleClick="toggleSideBar"
       />
 
-      <span style="font-size: 14px; color: var(--text-color-secondary); margin-left: 10px;">
-        首页 (Dashboard)
-      </span>
+      <el-breadcrumb separator="/" class="breadcrumb-container">
+        <transition-group name="breadcrumb">
+          <el-breadcrumb-item v-for="(item, index) in breadcrumbs" :key="item.path">
+            <span v-if="isLast(index) || !item.path" class="no-redirect">
+              {{ item.meta?.title || item.title }}
+            </span>
+            <a v-else @click.prevent="router.push(item.path)">
+              {{ item.meta?.title || item.title }}
+            </a>
+          </el-breadcrumb-item>
+        </transition-group>
+      </el-breadcrumb>
     </div>
 
     <div class="right-menu">
@@ -103,6 +131,28 @@ const handleLogout = () => {
   .left-menu {
     display: flex;
     align-items: center;
+
+    /* 【新增】面包屑组件样式 */
+    .breadcrumb-container {
+      display: inline-block;
+      font-size: 14px;
+      line-height: 50px;
+      margin-left: 8px;
+
+      .no-redirect {
+        color: var(--text-color-secondary);
+        cursor: text;
+      }
+
+      a {
+        color: var(--text-color-regular);
+        cursor: pointer;
+        font-weight: 500;
+        &:hover {
+          color: var(--el-color-primary);
+        }
+      }
+    }
   }
 
   .right-menu {
@@ -142,5 +192,21 @@ const handleLogout = () => {
       }
     }
   }
+}
+
+/* 【新增】面包屑切换动画 */
+.breadcrumb-enter-active,
+.breadcrumb-leave-active {
+  transition: all 0.5s;
+}
+
+.breadcrumb-enter-from,
+.breadcrumb-leave-active {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.breadcrumb-leave-active {
+  position: absolute;
 }
 </style>
