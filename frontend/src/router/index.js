@@ -49,6 +49,24 @@ const router = createRouter({
       name: 'Login',
       component: () => import('@/views/auth/index.vue'), // 我们马上创建这个文件
       meta: { title: '登录 - OrangeTools' }
+    },
+    {
+      path: '/404',
+      name: '404',
+      component: () => import('@/views/error/404.vue'),
+      meta: { title: '页面找不到了', hidden: true }
+    },
+    {
+      path: '/500',
+      name: '500',
+      component: () => import('@/views/error/500.vue'),
+      meta: { title: '服务器错误', hidden: true }
+    },
+    // 【关键】必须放在最后：匹配所有未定义的路径 -> 跳转 404
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/404',
+      meta: { hidden: true }
     }
   ]
 })

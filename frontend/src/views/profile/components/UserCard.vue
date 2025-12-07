@@ -8,7 +8,7 @@ import { Camera, Calendar, UserFilled, Iphone, Message } from '@element-plus/ico
 const userStore = useUserStore()
 const dialogVisible = ref(false)
 
-const avatarList = [1, 2, 3].map(i => ({
+const avatarList = [1, 2, 3, 4].map(i => ({
   id: i,
   name: `avatar-${i}.png`,
   url: new URL(`../../../assets/images/avatars/avatar-${i}.png`, import.meta.url).href

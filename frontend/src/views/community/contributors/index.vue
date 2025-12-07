@@ -4,11 +4,11 @@ import { contributors } from './data'
 import { Medal, UserFilled, Star } from '@element-plus/icons-vue'
 
 // 1. 分类管理
-const activeTab = ref('core')
+const activeTab = ref('all')
 const tabs = [
+  { label: '全部英雄', value: 'all', icon: Star },
   { label: '核心团队', value: 'core', icon: Medal },
-  { label: '社区贡献', value: 'community', icon: UserFilled },
-  { label: '全部英雄', value: 'all', icon: Star }
+  { label: '社区贡献', value: 'community', icon: UserFilled }
 ]
 
 // 状态标记

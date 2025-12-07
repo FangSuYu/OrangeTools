@@ -19,8 +19,10 @@ const showLogoImage = ref(true)
 
 // Logo 图片地址 (先用网图代替，你有了本地图片后改成 import 引入)
 // 建议：大图用长方形，小图用正方形
-const logoUrl = ref('https://element-plus.org/images/element-plus-logo.svg')
-const logoSmallUrl = ref('https://element-plus.org/images/element-plus-logo-small.svg')
+// const logoUrl = ref('src/assets/small-logo.jpg')
+// const logoSmallUrl = ref('src/assets/big-logo.png')
+const logoUrl = ref('src/assets/favicon.png')
+const logoSmallUrl = ref('src/assets/favicon.png')
 
 // 计算当前应该显示哪个图片
 const currentLogo = computed(() => {
