@@ -7,6 +7,7 @@ import { User, Lock, Message, Iphone } from '@element-plus/icons-vue'
 import { Vue3Lottie } from 'vue3-lottie'
 // 引入刚才下载的动画 JSON
 import LoginJSON from '@/assets/login-animate.json'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -55,7 +56,7 @@ const registerForm = reactive({
   username: '',
   password: '',
   confirmPassword: '',
-  studentId: ''
+  studentId: null
 })
 // 自定义校验：两次密码是否一致
 const validatePass2 = (rule, value, callback) => {
@@ -84,6 +85,7 @@ const handleRegister = () => {
       if (success) {
         // 注册成功，切换回登录面板，让用户登录
         isLogin.value = true
+        ElMessage.success('注册成功，请登录')
       }
     }
   })
@@ -118,7 +120,8 @@ const handleRegister = () => {
               <el-input v-model="loginForm.username" placeholder="账号 / 学号 / 手机号" :prefix-icon="User" />
             </el-form-item>
             <el-form-item prop="password">
-              <el-input v-model="loginForm.password" type="password" show-password placeholder="密码" :prefix-icon="Lock" @keyup.enter="handleLogin" />
+              <el-input v-model="loginForm.password" type="password" show-password placeholder="密码" :prefix-icon="Lock"
+                @keyup.enter="handleLogin" />
             </el-form-item>
             <el-button type="primary" :loading="loading" class="submit-btn" @click="handleLogin" round>
               立即登录
@@ -140,10 +143,12 @@ const handleRegister = () => {
               <el-input v-model="registerForm.studentId" placeholder="学号 (选填, 用于教务功能)" :prefix-icon="Iphone" />
             </el-form-item>
             <el-form-item prop="password">
-              <el-input v-model="registerForm.password" type="password" show-password placeholder="设置密码" :prefix-icon="Lock" />
+              <el-input v-model="registerForm.password" type="password" show-password placeholder="设置密码"
+                :prefix-icon="Lock" />
             </el-form-item>
             <el-form-item prop="confirmPassword">
-              <el-input v-model="registerForm.confirmPassword" type="password" show-password placeholder="确认密码" :prefix-icon="Lock" />
+              <el-input v-model="registerForm.confirmPassword" type="password" show-password placeholder="确认密码"
+                :prefix-icon="Lock" />
             </el-form-item>
             <el-button type="primary" :loading="loading" class="submit-btn" @click="handleRegister" round>
               立即注册
@@ -185,8 +190,15 @@ const handleRegister = () => {
     width: 100%;
     height: auto;
     flex-direction: column;
-    .login-left { display: none; }
-    .login-right { width: 100%; padding: 40px 20px; }
+
+    .login-left {
+      display: none;
+    }
+
+    .login-right {
+      width: 100%;
+      padding: 40px 20px;
+    }
   }
 }
 
@@ -203,11 +215,13 @@ const handleRegister = () => {
   .brand {
     text-align: center;
     margin-bottom: 40px;
+
     h1 {
       font-size: 32px;
       margin: 10px 0;
       font-weight: bold;
     }
+
     p {
       font-size: 16px;
       opacity: 0.9;
@@ -216,7 +230,7 @@ const handleRegister = () => {
 
   .animation-wrapper {
     /* 让动画稍微浮动一点 */
-    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.2));
   }
 }
 
@@ -230,11 +244,13 @@ const handleRegister = () => {
 
   .form-header {
     margin-bottom: 30px;
+
     h2 {
       font-size: 28px;
       color: var(--text-color-primary);
       margin-bottom: 10px;
     }
+
     .subtitle {
       color: var(--text-color-secondary);
       font-size: 14px;
@@ -259,6 +275,7 @@ const handleRegister = () => {
       cursor: pointer;
       margin-left: 5px;
       font-weight: 600;
+
       &:hover {
         text-decoration: underline;
       }
@@ -272,7 +289,14 @@ const handleRegister = () => {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
