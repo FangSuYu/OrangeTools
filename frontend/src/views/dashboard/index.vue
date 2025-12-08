@@ -129,7 +129,7 @@ const fetchLatestRelease = async () => {
     // 【核心】使用 jsDelivr CDN 读取 package.json
     // 加时间戳 ?t=... 防止缓存
     const timestamp = new Date().getTime()
-    const res = await fetch(`https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${GITHUB_REPO}@main/package.json?t=${timestamp}`)
+    const res = await fetch(`https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${GITHUB_REPO}@main/frontend/package.json?t=${timestamp}`)
 
     if (res.ok) {
       const data = await res.json()
