@@ -1,11 +1,9 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { Vue3Lottie } from 'vue3-lottie'
+import lottieData from '@/assets/lottie/500.json'
 
 const router = useRouter()
-
-// Lottie 动画链接 (500 Server Error)
-const lottieUrl = 'src/assets/lottie/500.json'
 
 const goHome = () => {
   router.push('/')
@@ -15,7 +13,7 @@ const goHome = () => {
 <template>
   <div class="error-container">
     <div class="lottie-box">
-      <Vue3Lottie :animationLink="lottieUrl" :height="400" :width="400" />
+      <Vue3Lottie :animationData="lottieData" :height="400" :width="400" />
     </div>
     <div class="content">
       <h1>500</h1>

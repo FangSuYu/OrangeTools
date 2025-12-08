@@ -1,11 +1,8 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { Vue3Lottie } from 'vue3-lottie'
-
+import lottieData from '@/assets/lottie/404.json'
 const router = useRouter()
-
-// Lottie 动画链接 (404 Not Found)
-const lottieUrl = 'src/assets/lottie/404.json'
 
 const goHome = () => {
   router.push('/')
@@ -15,7 +12,7 @@ const goHome = () => {
 <template>
   <div class="error-container">
     <div class="lottie-box">
-      <Vue3Lottie :animationLink="lottieUrl" :height="400" :width="400" />
+      <Vue3Lottie :animationData="lottieData" :height="400" :width="400" />
     </div>
     <div class="content">
       <h1>404</h1>
