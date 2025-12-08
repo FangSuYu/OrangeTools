@@ -82,8 +82,9 @@ onMounted(() => {
         <p>你的每一个想法，都可能成为 OrangeTools 的下一个功能。</p>
       </div>
       <div class="right">
-        <el-button type="primary" size="large" round icon="Plus" @click="dialogVisible = true">
-          我要提建议
+        <el-button type="primary" size="large" round @click="dialogVisible = true">
+          <el-icon><plus /></el-icon>
+          <span>我要提建议</span>
         </el-button>
       </div>
     </div>

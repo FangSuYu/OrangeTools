@@ -7,7 +7,7 @@ import { getToolStats, getPublicFeedbacks } from '@/api/community'
 import {
   DataAnalysis, ChatLineSquare, Medal, User,
   Sunny, Moon, Coffee, Timer, StarFilled, ArrowRight,
-  Menu // 引入 Menu 图标
+  Menu,Connection, Refresh
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -60,7 +60,7 @@ const shortcuts = ref([
 
 // ================== 3. 业务逻辑 ==================
 
-const PROJECT_START_DATE = '2025-12-07'
+const PROJECT_START_DATE = '2025-12-08'
 
 const calcRunDays = () => {
   const start = new Date(PROJECT_START_DATE).getTime()
@@ -111,10 +111,52 @@ const loadData = async () => {
 
 const go = (path) => router.push(path)
 
+// ================== 4. GitHub CDN 版本逻辑 (CDN版) ==================
+const GITHUB_USER = 'FangSuYu'
+const GITHUB_REPO = 'OrangeTools'
+
+const releaseInfo = ref({
+  version: 'Checking...', // 初始状态
+  status: 'Loading',      // 状态标签
+  url: `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases`,
+  desc: '正在连接 CDN 获取最新版本...',
+  loading: false
+})
+
+const fetchLatestRelease = async () => {
+  releaseInfo.value.loading = true
+  try {
+    // 【核心】使用 jsDelivr CDN 读取 package.json
+    // 加时间戳 ?t=... 防止缓存
+    const timestamp = new Date().getTime()
+    const res = await fetch(`https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${GITHUB_REPO}@main/package.json?t=${timestamp}`)
+
+    if (res.ok) {
+      const data = await res.json()
+      releaseInfo.value = {
+        version: `v${data.version}`, // 读取 package.json 的 version
+        status: 'Stable', // 既然能读取到，就是稳定版
+        url: `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases`,
+        desc: '🚀 最新版本已发布！点击下方按钮前往 GitHub 查看详细日志与下载。',
+        loading: false
+      }
+    } else {
+      throw new Error('CDN fetch failed')
+    }
+  } catch (e) {
+    console.warn('版本检查失败', e)
+    // 失败兜底显示
+    releaseInfo.value.version = 'v1.0.0'
+    releaseInfo.value.status= 'Local'
+    releaseInfo.value.desc = '网络连接不稳定，显示本地版本。'
+    releaseInfo.value.loading = false
+  }
+}
 onMounted(() => {
   calcRunDays()
   fetchHitokoto()
   loadData()
+  fetchLatestRelease()
 })
 </script>
 
@@ -210,35 +252,38 @@ onMounted(() => {
       </el-col>
 
       <el-col :xs="24" :lg="8" class="col-right">
-        <el-card class="box-card version-card" shadow="never">
+        <el-card class="box-card project-card" shadow="never">
           <template #header>
             <div class="card-header">
-              <span><el-icon><StarFilled /></el-icon> 更新日志</span>
-              <el-tag size="small" effect="dark">Beta</el-tag>
+              <span><el-icon><Connection /></el-icon> 项目状态</span>
+              <el-button link :icon="Refresh" :loading="releaseInfo.loading" @click="fetchLatestRelease"></el-button>
             </div>
           </template>
-          <div class="version-list">
-            <div class="ver-item active">
-              <div class="ver-num">v0.1.0</div>
-              <div class="ver-desc">
-                <ul>
-                  <li>✅ 课表空闲统计助手上线</li>
-                  <li>✅ 社区许愿墙上线</li>
-                  <li>✅ 贡献者荣誉墙上线</li>
-                  <li>✅ 全局暗黑模式适配</li>
-                </ul>
+
+          <div class="repo-info">
+            <div class="repo-header">
+              <div class="version-badge">
+                <span class="label">Current</span>
+                <span class="ver">{{ releaseInfo.version }}</span>
               </div>
-              <div class="ver-date">2025-12-07</div>
+              <el-tag size="small" :type="releaseInfo.status === 'Stable' ? 'success' : 'info'" effect="dark">
+                {{ releaseInfo.status }}
+              </el-tag>
             </div>
-            <div class="ver-item future">
-              <div class="ver-num">v0.2.0</div>
-              <div class="ver-desc">
-                <ul>
-                  <li>🛠️ 个人中心 (开发中)</li>
-                  <li>🛠️ 更多实用工具...</li>
-                </ul>
-              </div>
-              <div class="ver-date">敬请期待</div>
+
+            <div class="repo-desc">
+              <p>{{ releaseInfo.desc }}</p>
+            </div>
+
+            <div class="repo-actions">
+              <a :href="releaseInfo.url" target="_blank" class="github-btn">
+                <img src="https://img.icons8.com/ios-glyphs/30/ffffff/github.png" alt="git">
+                GitHub Release
+              </a>
+            </div>
+
+            <div class="bg-decoration">
+              <img src="@/assets/favicon.png" alt="bg" />
             </div>
           </div>
         </el-card>
@@ -249,6 +294,107 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
+/* 右侧项目卡片样式 */
+.project-card {
+  position: relative;
+  overflow: hidden;
+
+  .repo-info {
+    position: relative;
+    z-index: 2;
+  }
+
+  .repo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    .version-badge {
+      display: flex;
+      align-items: center;
+      background: var(--el-color-primary-light-9);
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid var(--el-color-primary-light-5);
+
+      .label {
+        background: var(--el-color-primary);
+        color: #fff;
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-right: 8px;
+        font-weight: bold;
+      }
+      .ver {
+        font-weight: 800;
+        color: var(--el-color-primary);
+        font-size: 16px;
+        font-family: 'Helvetica Neue', sans-serif;
+      }
+    }
+
+    .date {
+      font-size: 12px;
+      color: var(--text-color-secondary);
+    }
+  }
+
+  .repo-desc {
+    background: var(--el-fill-color-light);
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-color-regular);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    min-height: 80px;
+    border: 1px dashed var(--border-color);
+  }
+
+  .repo-actions {
+    text-align: center;
+    .github-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 0;
+      background: #24292e; /* GitHub 黑 */
+      color: #fff;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: all 0.3s;
+
+      img { width: 20px; height: 20px; }
+
+      &:hover {
+        background: #000;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      }
+    }
+  }
+
+  /* 暗黑模式适配 */
+  :deep(html.dark) & .github-btn {
+    background: #373e47;
+    &:hover { background: #505a66; }
+  }
+
+  /* 背景装饰水印 */
+  .bg-decoration {
+    position: absolute;
+    bottom: -20px;
+    right: -20px;
+    opacity: 0.05;
+    z-index: 1;
+    img { width: 150px; height: 150px; transform: rotate(-15deg); }
+  }
+}
 /* 样式与之前完全一致，直接复用即可 */
 .dashboard-container { padding: 20px; max-width: 1400px; margin: 0 auto; }
 .welcome-card { background: var(--bg-color-card); border-radius: 12px; padding: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; box-shadow: 0 4px 20px var(--shadow-color); margin-bottom: 30px; border: 1px solid var(--border-color); background-image: linear-gradient(120deg, var(--bg-color-card) 60%, var(--el-color-primary-light-9) 100%);

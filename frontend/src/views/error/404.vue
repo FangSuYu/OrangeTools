@@ -5,7 +5,6 @@ import { Vue3Lottie } from 'vue3-lottie'
 const router = useRouter()
 
 // Lottie 动画链接 (404 Not Found)
-// 这是一个可爱的宇航员迷失太空的动画
 const lottieUrl = 'src/assets/lottie/404.json'
 
 const goHome = () => {

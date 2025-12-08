@@ -18,7 +18,7 @@ const usageCount = ref(0)// 默认为 0，等待加载
 const currentWeek = ref(1)
 
 // 【自定义】教程链接 (你可以替换成你真实的飞书文档链接)
-const TUTORIAL_LINK = 'https://www.feishu.cn/'
+const TUTORIAL_LINK = 'https://ai.feishu.cn/docx/WYp1dER7AoWzCox9viDcXaCYnAb?from=from_copylink'
 
 const filters = ref({
   college: '',
