@@ -1,11 +1,9 @@
-```text
+---
 name: ✨ 功能建议 (Feature Request)
 about: 对本项目有新的想法？欢迎提出建议！
 title: '[Feature] 请简述你想要的新功能'
 labels: enhancement
 assignees: ''
-```
-
 ---
 
 ### 😫 痛点描述 (Problem Statement)
