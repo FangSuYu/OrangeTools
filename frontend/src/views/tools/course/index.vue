@@ -6,6 +6,7 @@ import { analyzeCourse } from '@/api/tools/course'
 import { useCourseStore } from '@/stores/modules/course'
 import { getToolStats, reportToolUsage } from '@/api/community'
 import CountUp from 'vue-countup-v3'
+import { copyText } from '@/utils/clipboard'
 
 const courseStore = useCourseStore()
 
@@ -159,7 +160,7 @@ const handleCopyCell = async (slot, day) => {
 ❌ 忙碌(${cell.busyStudents.length}人): ${busyNames}`
 
   try {
-    await navigator.clipboard.writeText(content)
+    await copyText(content)
     ElMessage.success('已复制该节课详情到剪贴板')
   } catch (err) {
     ElMessage.error('复制失败，请手动复制',err)
@@ -189,7 +190,7 @@ const handleCopyWeek = async () => {
   }
 
   try {
-    await navigator.clipboard.writeText(content)
+    await copyText(content)
     ElMessage.success('已复制本周完整报表！')
   } catch (err) {
     ElMessage.error('复制失败',err)

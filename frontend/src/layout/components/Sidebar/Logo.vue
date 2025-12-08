@@ -22,11 +22,11 @@ const showLogoImage = ref(true)
 // const logoUrl = ref('src/assets/small-logo.jpg')
 // const logoSmallUrl = ref('src/assets/big-logo.png')
 const logoUrl = ref('src/assets/favicon.png')
-const logoSmallUrl = ref('src/assets/favicon.png')
+// const logoSmallUrl = ref('src/assets/favicon.png')
 
 // 计算当前应该显示哪个图片
 const currentLogo = computed(() => {
-  return props.collapse ? (logoSmallUrl.value || logoUrl.value) : logoUrl.value
+  return logoUrl.value
 })
 // ====================================================================
 </script>
@@ -37,7 +37,7 @@ const currentLogo = computed(() => {
       <router-link key="expand" class="sidebar-logo-link" to="/">
 
         <template v-if="showLogoImage">
-          <img v-if="currentLogo" :src="currentLogo" class="sidebar-logo">
+          <img v-if="currentLogo" src="@/assets/favicon.png" class="sidebar-logo">
           <h1 v-show="!collapse" class="sidebar-title">{{ title }}</h1>
         </template>
 

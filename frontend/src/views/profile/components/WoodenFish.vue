@@ -1,12 +1,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import audioSrc from '@/assets/muyu.mp3'
 
 const count = ref(0)
 const animate = ref(false)
 
 // 1. 初始化音频
 // 这里的链接是一个免费的木鱼音效，你也可以换成 src/assets/muyu.mp3
-const audioSrc = 'src/assets/muyu.mp3'
+// const audioSrc = '@/assets/muyu.mp3'
 const audio = new Audio(audioSrc)
 
 // 2. 敲击逻辑
