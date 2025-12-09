@@ -1,10 +1,12 @@
 package cn.orangetools.common.config;
 
 import cn.orangetools.common.utils.JwtUtils;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,6 +25,7 @@ import java.io.IOException;
  * @github https://github.com/FangSuYu/OrangeTools.git
  * @license GPL-3.0 License
  */
+@Slf4j
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -53,32 +56,47 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 2. 剪切 Token (去掉 "Bearer " 前缀)
         jwt = authHeader.substring(7);
 
-        // 3. 解析 Token 里的用户名
-        // 如果这里解析失败（比如 Token 是伪造的），jwtUtils 会抛出异常，这里没做捕获，全局异常处理会接住
-        username = jwtUtils.extractUsername(jwt);
+        try {
+            // 3. 解析 Token 里的用户名
+            // 如果这里解析失败（比如 Token 是伪造的），jwtUtils 会抛出异常，这里没做捕获，全局异常处理会接住
+            username = jwtUtils.extractUsername(jwt);
 
-        // 4. 如果用户名存在，且当前上下文中还没认证过（防止重复认证）
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // 去数据库查这个人的详情
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            // 4. 如果用户名存在，且当前上下文中还没认证过（防止重复认证）
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // 去数据库查这个人的详情
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-            // 5. 验证 Token 是否合法
-            if (jwtUtils.isTokenValid(jwt, userDetails.getUsername())) {
-                // 生成“通过认证”的票据
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                // 5. 验证 Token 是否合法
+                if (jwtUtils.isTokenValid(jwt, userDetails.getUsername())) {
+                    // 生成“通过认证”的票据
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // 【关键】把票据存入 Security 上下文，后续的 Controller 就能知道是谁登录了
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    // 【关键】把票据存入 Security 上下文，后续的 Controller 就能知道是谁登录了
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+
+            // 继续下一个过滤器
+            filterChain.doFilter(request, response);
+        }catch (ExpiredJwtException e){
+            log.error("JWT Token 已过期: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\": 401, \"msg\": \"登录凭证已过期，请重新登录\", \"data\": null}");
+            return;
+        }catch(Exception e){
+            log.error("JWT 解析失败: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\": 401, \"msg\": \"无效的 Token\", \"data\": null}");
+            return;
         }
 
-        // 继续下一个过滤器
-        filterChain.doFilter(request, response);
     }
 
 }
