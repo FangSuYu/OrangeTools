@@ -18,6 +18,30 @@ export function register(data) {
   })
 }
 
+export function sendCode(data) {
+  return request({
+    url: '/api/auth/code',
+    method: 'post',
+    data
+  })
+}
+
+export function loginEmail(data) {
+  return request({
+    url: '/api/auth/login/email',
+    method: 'post',
+    data
+  })
+}
+
+export function resetPassword(data) {
+  return request({
+    url: '/api/auth/password/reset',
+    method: 'post',
+    data
+  })
+}
+
 export function getUserInfo() {
   return request({
     url: '/api/auth/info',

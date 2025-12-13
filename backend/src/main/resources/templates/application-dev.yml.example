@@ -7,8 +7,31 @@ spring:
     # serverTimezone=Asia/Shanghai: 防止时区错误
     # allowPublicKeyRetrieval=true: MySQL 8 某些版本连接需要
     url: jdbc:mysql://localhost:3306/orange_tools?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: 【请修改】你的数据库账号
+    username: 【请修改】你的数据库用户名
     password: 【请修改】你的数据库密码
+  # Redis 配置 (用于存储验证码)
+  data:
+    redis:
+      host: localhost # Redis服务器地址
+      port: 6379      # Redis端口
+      password: 【请修改】你的redis密码 # Redis密码 (如果有)
+      database: 2     # 数据库索引
+
+    # 邮件服务配置 (用于发送验证码)
+  mail:
+    host: smtp.qq.com          # SMTP服务器地址 (以QQ邮箱为例)
+    port: 465                  # 端口 (通常为 587 或 465)
+    username: 【请修改】你的邮箱账号 # 发件人邮箱账号
+    password: 【请修改】你的邮箱授权码 # 邮箱授权码 (注意不是登录密码)
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          starttls:
+            enable: true
+            required: true
 
 mybatis-plus:
   configuration:
@@ -24,5 +47,5 @@ logging:
 
 # JWT配置相关
 jwt:
-  secret: 【请修改】你的密钥
-  expiration: 1000 * 60 * 60 * 24
+  secret: 【请修改】你的JWT密钥 # JWT密钥 至少32字符以上
+  expiration: 86400000 # JWT过期时间 (毫秒)

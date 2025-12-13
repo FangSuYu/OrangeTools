@@ -19,4 +19,6 @@ public class RegisterDto {
     // 学号是选填的，可以在注册时填，也可以不填
     private String studentId;
 
+    private String email;
+    private String code;
 }

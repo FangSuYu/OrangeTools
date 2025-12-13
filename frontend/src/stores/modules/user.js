@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { login as loginApi, getUserInfo as getUserInfoApi, register as registerApi } from '@/api/auth'
+import { login as loginApi, getUserInfo as getUserInfoApi, register as registerApi, loginEmail as loginEmailApi } from '@/api/auth'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref('')
@@ -32,6 +32,17 @@ export const useUserStore = defineStore('user', () => {
   const login = async (loginForm) => {
     try {
       const res = await loginApi(loginForm)
+      token.value = res
+      await getInfo()
+      return true
+    } catch (error) {
+      return false
+    }
+  }
+
+  const loginEmail = async (loginForm) => {
+    try {
+      const res = await loginEmailApi(loginForm)
       token.value = res
       await getInfo()
       return true
@@ -78,7 +89,7 @@ export const useUserStore = defineStore('user', () => {
   return {
     token, username, nickname, studentId, avatar, role, phone, email,
     avatarUrl, // 【导出这个计算属性】
-    login, register, getInfo, logout
+    login, loginEmail, register, getInfo, logout
   }
 }, {
   persist: true

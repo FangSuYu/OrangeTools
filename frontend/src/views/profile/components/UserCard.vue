@@ -53,10 +53,10 @@ const selectAvatar = async (avatarName) => {
       <el-divider border-style="dashed" />
 
       <div class="detail-list">
-        <div class="item">
+        <!-- <div class="item">
           <div class="label"><el-icon><Calendar /></el-icon> 注册时间</div>
           <div class="val">2025-12-05</div>
-        </div>
+        </div> -->
         <div class="item">
           <div class="label"><el-icon><Iphone /></el-icon> 手机绑定</div>
           <div class="val">{{ userStore.phone || '未绑定' }}</div>

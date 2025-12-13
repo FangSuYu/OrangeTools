@@ -2,13 +2,10 @@ package cn.orangetools.system.controller;
 
 import cn.orangetools.common.result.Result;
 import cn.orangetools.system.entity.User;
-import cn.orangetools.system.model.dto.LoginDto;
-import cn.orangetools.system.model.dto.RegisterDto;
+import cn.orangetools.system.model.dto.*;
 import cn.orangetools.system.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -67,4 +64,30 @@ public class AuthController {
         return Result.success(user);
     }
 
+    /**
+     * 发送邮箱验证码
+     */
+    @PostMapping("/code")
+    public Result<Void> sendCode(@RequestBody SendEmailCodeDto sendEmailCodeDto) {
+        authService.sendCode(sendEmailCodeDto.getEmail(), sendEmailCodeDto.getType());
+        return Result.success();
+    }
+
+    /**
+     * 邮箱验证码登录
+     */
+    @PostMapping("/login/email")
+    public Result<String> loginEmail(@RequestBody EmailLoginDto loginDto) {
+        String token = authService.loginEmail(loginDto);
+        return Result.success(token);
+    }
+
+    /**
+     * 重置密码
+     */
+    @PostMapping("/password/reset")
+    public Result<Void> resetPassword(@RequestBody PasswordResetDto resetDto) {
+        authService.resetPassword(resetDto);
+        return Result.success();
+    }
 }
