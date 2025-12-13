@@ -114,7 +114,7 @@ const registerForm = reactive({
   username: '',
   password: '',
   confirmPassword: '',
-  studentId: '',
+  studentId: null,
   email: '',
   code: ''
 })
