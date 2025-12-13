@@ -235,7 +235,7 @@ const showNotDevelopedMessage = () => {
             <el-tab-pane label="账号登录" name="account">
               <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" size="large">
                 <el-form-item prop="username">
-                  <el-input v-model="loginForm.username" placeholder="账号 / 学号 / 手机号" :prefix-icon="User" />
+                  <el-input v-model="loginForm.username" placeholder="账号" :prefix-icon="User" />
                 </el-form-item>
                 <el-form-item prop="password">
                   <el-input v-model="loginForm.password" type="password" show-password placeholder="密码" :prefix-icon="Lock"
