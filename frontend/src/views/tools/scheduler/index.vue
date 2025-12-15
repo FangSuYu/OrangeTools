@@ -1,0 +1,937 @@
+<template>
+  <div class="app-container">
+
+    <div v-if="!hasData" class="tool-upload-page">
+      <div class="tool-header">
+        <div class="header-content">
+          <h1>📅 智能排班助手</h1>
+          <p class="desc">
+            批量上传 Excel 课表，一键生成智能排班方案，支持手动调整。
+            <el-link type="primary" class="tutorial-link" @click="openTutorial">
+              <el-icon>
+                <Document />
+              </el-icon> 查看使用教程
+            </el-link>
+          </p>
+          <div class="stats-badge">🔥 已累计服务 <span><count-up :end-val="usageCount" :duration="2.5" /></span> 人次</div>
+        </div>
+      </div>
+
+      <transition name="el-zoom-in-center">
+        <div v-if="!hasData" class="upload-section card-box">
+          <el-upload ref="uploadRef" v-model:file-list="fileList" class="upload-demo" drag multiple :auto-upload="false"
+            accept=".xlsx, .xls">
+            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+            <div class="el-upload__text">将 Excel 课表拖到此处，或 <em>点击上传</em></div>
+            <template #tip>
+              <div class="el-upload__tip">支持 .xlsx / .xls 文件，可批量上传</div>
+            </template>
+          </el-upload>
+
+          <div class="actions">
+            <el-button type="primary" size="large" :loading="loading" @click="startAnalysis" round>
+              <el-icon>
+                <DataAnalysis />
+              </el-icon>
+              <span>开始智能排班</span>
+            </el-button>
+          </div>
+        </div>
+      </transition>
+    </div>
+
+    <div v-else class="workspace-wrapper">
+
+      <div class="workspace-toolbar">
+        <div class="left-section">
+          <div class="week-selector">
+            <span class="label">当前周次:</span>
+            <el-input-number v-model="currentWeek" :min="1" :max="25" size="default" />
+          </div>
+        </div>
+
+        <div class="right-section">
+          <input type="file" ref="importInputRef" style="display: none" accept=".json" @change="handleImportJSON" />
+
+          <el-button-group>
+            <el-tooltip content="导入之前的排班数据(.json)" placement="bottom">
+              <el-button type="warning" plain :icon="FolderOpened" @click="triggerImport">导入</el-button>
+            </el-tooltip>
+            <el-tooltip content="保存当前进度为文件(.json)" placement="bottom">
+              <el-button type="success" plain :icon="FolderChecked" @click="handleExportJSON">存档</el-button>
+            </el-tooltip>
+          </el-button-group>
+
+          <el-divider direction="vertical" class="custom-divider" />
+
+          <el-button type="danger" plain :icon="Delete" @click="handleClear">重置</el-button>
+
+          <el-tooltip content="截图分享" placement="bottom">
+            <el-button type="primary" plain :icon="Camera" @click="handleScreenshot"
+              :loading="screenshotLoading" style="margin-right: 20px;">
+            </el-button>
+          </el-tooltip>
+        </div>
+      </div>
+
+      <div class="workspace-body">
+
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <h3>待选人员 ({{ filteredStudents.length }})</h3>
+
+            <div class="filter-group">
+              <el-input v-model="searchQuery" placeholder="搜索姓名..." prefix-icon="Search" clearable
+                class="filter-item" />
+              <el-select v-model="filterCollege" placeholder="选择学院" clearable class="filter-item">
+                <el-option v-for="c in collegeOptions" :key="c" :label="c" :value="c" />
+              </el-select>
+              <div class="filter-row">
+                <el-select v-model="filterGrade" placeholder="年级" clearable class="filter-half">
+                  <el-option v-for="g in gradeOptions" :key="g" :label="g" :value="g" />
+                </el-select>
+                <el-select v-model="filterMajor" placeholder="专业" clearable class="filter-half">
+                  <el-option v-for="m in majorOptions" :key="m" :label="m" :value="m" />
+                </el-select>
+              </div>
+            </div>
+          </div>
+
+          <div class="sidebar-content">
+            <VueDraggable v-model="filteredStudents" :group="{ name: 'people', pull: 'clone', put: false }"
+              :sort="false" item-key="id" ghost-class="ghost-card" class="student-list" @start="onDragStart"
+              @end="onDragEnd">
+              <template #item="{ element }">
+                <div class="student-card">
+                  <div class="card-avatar">{{ element.name.charAt(0) }}</div>
+                  <div class="card-info">
+                    <div class="name">{{ element.name }}</div>
+                    <div class="meta">{{ element.major }}</div>
+                  </div>
+                  <el-icon class="drag-icon">
+                    <Rank />
+                  </el-icon>
+                </div>
+              </template>
+            </VueDraggable>
+          </div>
+        </aside>
+
+        <main class="schedule-grid" ref="scheduleGridRef">
+          <div class="grid-header">
+            <div class="idx-col">节次</div>
+            <div v-for="day in ['周一', '周二', '周三', '周四', '周五', '周六', '周日']" :key="day" class="day-col">
+              {{ day }}
+            </div>
+          </div>
+
+          <div class="grid-rows">
+            <div v-for="section in 10" :key="section" class="grid-row">
+              <div class="idx-cell">{{ section }}</div>
+
+              <div v-for="day in 7" :key="day" class="task-cell" :class="getCellHintClass(day, section)"
+                @click.self="openSelectDialog(day, section)">
+                <VueDraggable :list="getSlotList(day, section)" group="people" item-key="id" class="cell-draggable"
+                  ghost-class="ghost-tag" @change="(evt) => onSlotChange(evt, day, section)">
+                  <template #item="{ element }">
+                    <el-tooltip :content="getConflictInfo(element, day, section).tooltip" placement="top"
+                      :disabled="!getConflictInfo(element, day, section).isConflict" :teleported="false">
+                      <el-tag :type="getConflictInfo(element, day, section).type" closable class="student-tag"
+                        @close="removeStudent(day, section, element.id)" @click.stop>
+                        {{ element.name }}
+                        <el-icon v-if="getConflictInfo(element, day, section).isConflict" class="warn-icon">
+                          <Warning />
+                        </el-icon>
+                      </el-tag>
+                    </el-tooltip>
+                  </template>
+                </VueDraggable>
+
+                <div class="cell-action-overlay">
+                  <el-button :icon="Plus" circle size="small" class="add-btn"
+                    @click.stop="openSelectDialog(day, section)" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <el-dialog v-model="dialogVisible" title="添加人员" width="550px" append-to-body top="5vh">
+      <div class="dialog-header-custom">
+        <span class="info">正在安排: <span class="highlight">周{{ currentSelectDay }} 第{{ currentSelectSection
+            }}节</span></span>
+        <el-input v-model="dialogSearch" placeholder="搜索姓名..." style="width: 200px;" size="small"
+          prefix-icon="Search" />
+      </div>
+      <div class="dialog-list">
+        <div v-for="student in dialogStudentList" :key="student.id" class="dialog-item"
+          :class="{ 'is-conflict': student.conflictInfo.isConflict, 'is-added': student.isAdded }"
+          @click="!student.isAdded && selectStudentFromDialog(student)">
+          <div class="item-left">
+            <div class="avatar">{{ student.name.charAt(0) }}</div>
+            <div class="text">
+              <div class="name">{{ student.name }}</div>
+              <div class="desc" v-if="student.isAdded">
+                <el-tag size="small" type="info" effect="plain">已添加</el-tag>
+              </div>
+              <div class="desc" v-else-if="student.conflictInfo.isConflict">
+                <el-tag size="small" type="danger" effect="plain">{{ student.conflictInfo.reason }}</el-tag>
+              </div>
+              <div class="desc" v-else>
+                <el-tag size="small" type="success" effect="plain">空闲</el-tag>
+              </div>
+            </div>
+          </div>
+          <el-button size="small"
+            :type="student.isAdded ? 'info' : (student.conflictInfo.isConflict ? 'default' : 'primary')"
+            :icon="student.isAdded ? Check : Plus" :disabled="student.isAdded" circle />
+        </div>
+      </div>
+    </el-dialog>
+
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useSchedulerStore } from '@/stores/modules/scheduler'
+import VueDraggable from 'vuedraggable'
+import html2canvas from 'html2canvas'
+import CountUp from 'vue-countup-v3'
+import { getToolStats, reportToolUsage } from '@/api/community'
+import { Calendar, UploadFilled, Delete, Download, Search, Rank, Plus, Warning, Document, Check, Camera, DataAnalysis, Close,FolderOpened,FolderChecked } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const store = useSchedulerStore()
+const { studentPool, scheduleSolution, currentWeek } = storeToRefs(store)
+
+const hasData = computed(() => studentPool.value && studentPool.value.length > 0)
+
+// --- 统计与教程 ---
+const usageCount = ref(0)
+// 教程链接
+const TUTORIAL_LINK = 'https://ai.feishu.cn/docx/WYp1dER7AoWzCox9viDcXaCYnAb?from=from_copylink' // 示例链接，可按需修改
+
+const openTutorial = () => {
+  window.open(TUTORIAL_LINK, '_blank')
+}
+
+onMounted(async () => {
+  // 获取工具统计数据 (code: scheduler_tool)
+  try {
+    const res = await getToolStats()
+    // 后端返回的是 List<Tool>，找到 scheduler_tool 这一项
+    const tool = res.find(t => t.code === 'scheduler_tool')
+    if (tool) {
+      usageCount.value = tool.usageCount
+    }
+  } catch (e) {
+    console.error('获取统计失败', e)
+  }
+})
+
+// --- 上传逻辑 ---
+const fileList = ref([])
+const loading = ref(false)
+const uploadRef = ref(null)
+
+const startAnalysis = async () => {
+  if (fileList.value.length === 0) {
+    ElMessage.warning('请先选择 Excel 文件')
+    return
+  }
+  loading.value = true
+
+  // 注意：store.uploadAndParse 需要根据你实际 store 的实现，可能需要适配 raw file
+  // 假设 store.uploadAndParse 接受 file objects 数组
+  const rawFiles = fileList.value.map(f => f.raw)
+  const success = await store.uploadAndParse(rawFiles)
+
+  if (success) {
+    reportToolUsage('scheduler_tool').then(() => {
+      usageCount.value++ // 前端手动+1
+    })
+  }
+
+  loading.value = false
+}
+
+// ... 以下逻辑保持不变 ...
+const handleClear = () => {
+  ElMessageBox.confirm('确定要重置所有数据吗？', '提示', { type: 'warning' }).then(() => {
+    store.clearAll()
+    fileList.value = []
+  })
+}
+
+// 2. 新增 导入/导出 逻辑
+const importInputRef = ref(null)
+
+// 触发导入点击
+const triggerImport = () => {
+  importInputRef.value.click()
+}
+
+// 处理导入 JSON
+const handleImportJSON = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result)
+
+      // 简单的格式校验
+      if (!data.version || !data.pool || !data.solution) {
+        ElMessage.error('文件格式不正确，不是橙子排班助手的数据文件')
+        return
+      }
+
+      // 恢复数据到 Pinia
+      ElMessageBox.confirm('导入将覆盖当前所有数据，确定继续吗？', '警告', { type: 'warning' })
+        .then(() => {
+          store.studentPool = data.pool
+          store.scheduleSolution = data.solution
+          store.currentWeek = data.currentWeek || 1
+          ElMessage.success('方案已恢复')
+        })
+        .catch(() => {
+          // 取消导入，清空 input 防止下次无法触发 change
+          event.target.value = ''
+        })
+    } catch (err) {
+      ElMessage.error('文件解析失败')
+    }
+    // 清空 input
+    event.target.value = ''
+  }
+  reader.readAsText(file)
+}
+
+// 处理导出 JSON
+const handleExportJSON = () => {
+  if (!hasData.value) {
+    ElMessage.warning('当前没有数据可导出')
+    return
+  }
+
+  // 构造数据包
+  const exportData = {
+    version: '1.0',
+    timestamp: new Date().getTime(),
+    currentWeek: currentWeek.value,
+    pool: studentPool.value,       // 人员库
+    solution: scheduleSolution.value // 排班结果
+  }
+
+  const jsonStr = JSON.stringify(exportData, null, 2)
+  const blob = new Blob([jsonStr], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `橙子排班存档_${new Date().toLocaleDateString()}.json`
+  link.click()
+
+  URL.revokeObjectURL(url)
+  ElMessage.success('存档文件已下载')
+}
+
+const scheduleGridRef = ref(null)
+const screenshotLoading = ref(false)
+
+const handleScreenshot = async () => {
+  if (!scheduleGridRef.value) return
+  screenshotLoading.value = true
+  try {
+    const element = scheduleGridRef.value
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      ignoreElements: (el) => el.classList.contains('cell-action-overlay')
+    })
+    const link = document.createElement('a')
+    link.download = `橙子排班方案_第${currentWeek.value}周.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+    ElMessage.success('截图已生成并下载')
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('截图生成失败')
+  } finally {
+    screenshotLoading.value = false
+  }
+}
+
+// --- 筛选、拖拽、弹窗逻辑 ---
+const searchQuery = ref('')
+const filterCollege = ref('')
+const filterGrade = ref('')
+const filterMajor = ref('')
+const collegeOptions = computed(() => [...new Set(studentPool.value.map(s => s.college).filter(Boolean))])
+const gradeOptions = computed(() => [...new Set(studentPool.value.map(s => s.grade).filter(Boolean))])
+const majorOptions = computed(() => [...new Set(studentPool.value.map(s => s.major).filter(Boolean))])
+const filteredStudents = computed(() => {
+  return studentPool.value.filter(s => {
+    const matchName = s.name.includes(searchQuery.value)
+    const matchCollege = filterCollege.value ? s.college === filterCollege.value : true
+    const matchGrade = filterGrade.value ? s.grade === filterGrade.value : true
+    const matchMajor = filterMajor.value ? s.major === filterMajor.value : true
+    return matchName && matchCollege && matchGrade && matchMajor
+  })
+})
+const draggingStudent = ref(null)
+const onDragStart = (evt) => {
+  if (filteredStudents.value[evt.oldIndex]) draggingStudent.value = filteredStudents.value[evt.oldIndex]
+}
+const onDragEnd = () => { draggingStudent.value = null }
+const getCellHintClass = (day, section) => {
+  if (!draggingStudent.value) return ''
+  const check = store.checkConflict(draggingStudent.value, day, section, currentWeek.value)
+  return check.conflict ? 'hint-busy' : 'hint-free'
+}
+const getSlotList = (day, section) => {
+  const key = `${day}_${section}`
+  if (!scheduleSolution.value[key]) scheduleSolution.value[key] = []
+  return scheduleSolution.value[key]
+}
+const onSlotChange = (evt, day, section) => {
+  if (evt.added) {
+    const key = `${day}_${section}`
+    const list = scheduleSolution.value[key]
+    const unique = []
+    const ids = new Set()
+    for (const s of list) {
+      if (!ids.has(s.id)) { ids.add(s.id); unique.push(s); }
+      else { ElMessage.warning(`${s.name} 已存在`); }
+    }
+    scheduleSolution.value[key] = unique
+  }
+}
+const removeStudent = (day, section, id) => { store.removeStudentFromSlot(day, section, id) }
+const getConflictInfo = (student, day, section) => {
+  const check = store.checkConflict(student, day, section, currentWeek.value)
+  if (check.conflict) return { isConflict: true, type: 'danger', tooltip: `冲突: ${check.reason}` }
+  return { isConflict: false, type: 'success', tooltip: '空闲' }
+}
+const dialogVisible = ref(false)
+const currentSelectDay = ref(1)
+const currentSelectSection = ref(1)
+const dialogSearch = ref('')
+const openSelectDialog = (day, section) => {
+  currentSelectDay.value = day
+  currentSelectSection.value = section
+  dialogVisible.value = true
+  dialogSearch.value = ''
+}
+const dialogStudentList = computed(() => {
+  const currentSlotStudents = getSlotList(currentSelectDay.value, currentSelectSection.value)
+  const currentIds = currentSlotStudents.map(s => s.id)
+  return studentPool.value
+    .filter(s => s.name.includes(dialogSearch.value))
+    .map(s => ({
+      ...s,
+      conflictInfo: store.checkConflict(s, currentSelectDay.value, currentSelectSection.value, currentWeek.value),
+      isAdded: currentIds.includes(s.id)
+    }))
+    .sort((a, b) => {
+      if (a.isAdded !== b.isAdded) return a.isAdded ? 1 : -1
+      if (a.conflictInfo.isConflict !== b.conflictInfo.isConflict) return a.conflictInfo.isConflict ? 1 : -1
+      return 0
+    })
+})
+const selectStudentFromDialog = (student) => {
+  store.addStudentToSlot(currentSelectDay.value, currentSelectSection.value, student)
+}
+</script>
+
+<style scoped lang="scss">
+$primary-color: #ff9c00;
+$bg-color: #f5f7fa;
+$border-color: #e4e7ed;
+
+/* 引入淡入淡出动画 (适配 transition name="el-zoom-in-center") */
+.app-container {
+  height: 100vh;
+  background-color: $bg-color;
+  display: flex;
+  flex-direction: column;
+}
+
+// ================= UI 重构：上传页 (1:1 复刻 Course 风格) =================
+.tool-upload-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: 50px;
+  width: 100%;
+}
+
+.tool-header {
+  text-align: center;
+  margin-bottom: 30px;
+  margin-top: 20px;
+
+  .header-content {
+    h1 {
+      margin-bottom: 10px;
+      color: var(--text-color-primary);
+    }
+
+    .desc {
+      color: var(--text-color-secondary);
+      margin-bottom: 15px;
+    }
+
+    .stats-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+
+      background: var(--el-fill-color);
+      color: var(--text-color-regular);
+
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px solid var(--border-color);
+
+      span {
+        font-size: 16px;
+        font-family: 'Helvetica Neue', sans-serif;
+        color: var(--el-color-primary);
+        margin: 0 2px;
+      }
+    }
+
+    /* 暗黑模式微调 */
+    :deep(html.dark) & .stats-badge {
+      background: #262727;
+      border-color: #4c4d4f;
+    }
+
+    .tutorial-link {
+      font-size: 14px;
+      margin-left: 10px;
+      vertical-align: baseline;
+      cursor: pointer;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.card-box {
+  background: var(--bg-color-card);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.upload-section {
+  padding: 40px;
+  text-align: center;
+
+  :deep(.el-upload-dragger) {
+    background-color: var(--bg-color-overlay);
+    border-color: var(--border-color);
+
+    &:hover {
+      border-color: var(--el-color-primary);
+    }
+  }
+
+  .actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+
+    :deep(.el-button) {
+      display: inline-flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+
+      span {
+        margin-left: 5px;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .el-icon {
+        margin-right: 0;
+      }
+    }
+  }
+
+  /* 复刻 Course 的文件列表样式 */
+  :deep(.el-upload-list) {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 5px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 5px;
+
+    .el-upload-list__item {
+      background-color: var(--bg-color-page);
+      color: var(--text-color-regular);
+
+      &:hover {
+        background-color: var(--bg-color-overlay);
+      }
+    }
+  }
+}
+
+.upload-demo {
+  width: 100%;
+}
+
+// === 工作台样式 (保持原有) ===
+.workspace-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
+  .workspace-toolbar {
+    height: 60px;
+    background: #fff;
+    border-bottom: 1px solid $border-color;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    flex-shrink: 0;
+
+    .left-section {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+
+      .week-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #606266;
+      }
+    }
+
+    .right-section {
+      display: flex;
+      gap: 10px;
+    }
+  }
+
+  .workspace-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+
+    .sidebar {
+      width: 320px;
+      background: #fff;
+      border-right: 1px solid $border-color;
+      display: flex;
+      flex-direction: column;
+
+      .sidebar-header {
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+
+        h3 {
+          margin-bottom: 15px;
+          color: #303133;
+        }
+
+        .filter-group {
+          .filter-item {
+            margin-bottom: 8px;
+            width: 100%;
+          }
+
+          .filter-row {
+            display: flex;
+            gap: 8px;
+          }
+
+          .filter-half {
+            flex: 1;
+          }
+        }
+      }
+
+      .sidebar-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        background: #f9f9f9;
+
+        .student-card {
+          background: #fff;
+          padding: 12px;
+          border-radius: 6px;
+          border: 1px solid #ebeef5;
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+          cursor: grab;
+          transition: all 0.2s;
+
+          &:hover {
+            border-color: $primary-color;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          }
+
+          .card-avatar {
+            width: 36px;
+            height: 36px;
+            background: #f2f6fc;
+            color: #909399;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: bold;
+          }
+
+          .card-info {
+            flex: 1;
+
+            .name {
+              font-weight: 600;
+              color: #303133;
+            }
+
+            .meta {
+              font-size: 12px;
+              color: #909399;
+              margin-top: 2px;
+            }
+          }
+
+          .drag-icon {
+            color: #c0c4cc;
+          }
+        }
+      }
+    }
+
+    .schedule-grid {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      overflow: auto;
+
+      .grid-header {
+        display: flex;
+        flex-shrink: 0;
+        margin-bottom: 5px;
+
+        .idx-col {
+          width: 40px;
+        }
+
+        .day-col {
+          flex: 1;
+          text-align: center;
+          background: #eef1f6;
+          padding: 10px;
+          margin: 0 2px;
+          border-radius: 4px;
+          font-weight: bold;
+          color: #606266;
+        }
+      }
+
+      .grid-rows {
+        .grid-row {
+          display: flex;
+          margin-bottom: 4px;
+
+          .idx-cell {
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #909399;
+          }
+
+          .task-cell {
+            flex: 1;
+            background: #fff;
+            margin: 0 2px;
+            border: 1px solid #ebeef5;
+            border-radius: 4px;
+            min-height: 100px;
+            padding: 4px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: background 0.2s;
+
+            &:hover {
+              border-color: $primary-color;
+              background-color: #fffcf0;
+
+              .cell-action-overlay {
+                opacity: 1;
+                pointer-events: auto;
+              }
+            }
+
+            &.hint-free {
+              background-color: #f0f9eb !important;
+              border-color: #67c23a !important;
+            }
+
+            &.hint-busy {
+              background-color: #fef0f0 !important;
+              border-color: #f56c6c !important;
+            }
+
+            .cell-draggable {
+              flex: 1;
+              display: flex;
+              flex-wrap: wrap;
+              gap: 4px;
+              align-content: flex-start;
+            }
+
+            .student-tag {
+              position: relative;
+              z-index: 10;
+              cursor: pointer;
+
+              .warn-icon {
+                margin-left: 2px;
+              }
+            }
+
+            .cell-action-overlay {
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              display: flex;
+              align-items: flex-end;
+              justify-content: flex-end;
+              padding: 5px;
+              pointer-events: none;
+              opacity: 0;
+              transition: opacity 0.2s;
+              z-index: 5;
+
+              .add-btn {
+                pointer-events: auto;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.ghost-card {
+  opacity: 0.5;
+  border: 1px dashed $primary-color !important;
+  background: #ecf5ff !important;
+}
+
+.ghost-tag {
+  opacity: 0.5;
+}
+
+.dialog-header-custom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+
+  .highlight {
+    color: $primary-color;
+  }
+}
+
+.dialog-list {
+  max-height: 400px;
+  overflow-y: auto;
+
+  .dialog-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #f5f7fa;
+    cursor: pointer;
+    border-radius: 4px;
+
+    &:hover {
+      background: #f0f2f5;
+    }
+
+    &.is-conflict {
+      background: #fef0f0;
+    }
+
+    &.is-added {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .avatar {
+        width: 32px;
+        height: 32px;
+        background: #eee;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .text {
+        .name {
+          font-weight: 600;
+        }
+
+        .desc {
+          margin-top: 2px;
+        }
+      }
+    }
+  }
+}
+.custom-divider {
+  height: 24px; /* 调整为你期望的高度 */
+  align-self: center; /* 在 flex 容器中垂直居中 */
+}
+</style>

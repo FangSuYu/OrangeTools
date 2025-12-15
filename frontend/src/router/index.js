@@ -23,6 +23,12 @@ const router = createRouter({
           meta: { title: '课表统计助手', icon: 'DataAnalysis' } // 这里定义图标
         },
         {
+          path: 'tools/scheduler',
+          name: 'SchedulerTool',
+          component: () => import('@/views/tools/scheduler/index.vue'),
+          meta: { title: '智能排班助手', icon: 'Calendar' }
+        },
+        {
           path: 'community/feedback',
           name: 'Feedback',
           component: () => import('@/views/community/feedback/index.vue'),
