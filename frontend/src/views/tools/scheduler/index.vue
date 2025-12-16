@@ -51,6 +51,10 @@
         </div>
 
         <div class="right-section">
+          <el-button type="primary" color="#626aef" :icon="Cpu" @click="handleOpenSmartSettings"
+            style="margin-right: 15px; font-weight: bold;">
+            智能排班
+          </el-button>
           <input type="file" ref="importInputRef" style="display: none" accept=".json" @change="handleImportJSON" />
 
           <el-button-group>
@@ -207,6 +211,7 @@
       </div>
     </el-dialog>
 
+    <SmartSettings v-model="showSmartSettings" :student-pool="studentPool" @confirm="handleAutoSchedule" />
   </div>
 </template>
 
@@ -218,8 +223,9 @@ import VueDraggable from 'vuedraggable'
 import html2canvas from 'html2canvas'
 import CountUp from 'vue-countup-v3'
 import { getToolStats, reportToolUsage } from '@/api/community'
-import { Calendar, UploadFilled, Delete, Download, Search, Rank, Plus, Warning, Document, Check, Camera, DataAnalysis, Close, FolderOpened, FolderChecked } from '@element-plus/icons-vue'
+import { Calendar, UploadFilled, Delete, Download, Search, Rank, Plus, Warning, Document, Check, Camera, DataAnalysis, Close, FolderOpened, FolderChecked,Cpu } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import SmartSettings from './components/SmartSettings.vue'
 
 const store = useSchedulerStore()
 const { studentPool, scheduleSolution, currentWeek } = storeToRefs(store)
@@ -396,7 +402,7 @@ const handleScreenshot = async () => {
       height: element.scrollHeight,
       scrollX: 0,
       scrollY: -window.scrollY,
-      onclone: function(clonedDoc) {
+      onclone: function (clonedDoc) {
         const clonedElement = clonedDoc.querySelector('.schedule-grid')
         if (clonedElement) {
           clonedElement.style.overflow = 'visible'
@@ -404,7 +410,7 @@ const handleScreenshot = async () => {
           clonedElement.style.width = actualContentWidth + 'px'
         }
       },
-      ignoreElements: function(el) {
+      ignoreElements: function (el) {
         return el.classList.contains('cell-action-overlay')
       }
     })
@@ -555,6 +561,22 @@ const timeLayout = [
 const getSectionName = (sectionId) => {
   const target = timeLayout.find(t => t.id === sectionId)
   return target ? (target.alias || `第${target.id}节`) : `${sectionId}`
+}
+
+// 以下为智能排班相关功能代码
+const showSmartSettings = ref(false)
+
+const handleOpenSmartSettings = () => {
+  showSmartSettings.value = true
+}
+
+const handleAutoSchedule = (payload) => {
+  console.log('开始智能排班，参数：', payload)
+  // TODO: 这里调用后端接口
+  // loading.value = true
+  // await api.autoSchedule(payload) ...
+  // loading.value = false
+  ElMessage.success('配置已提交，算法接入中...')
 }
 </script>
 
