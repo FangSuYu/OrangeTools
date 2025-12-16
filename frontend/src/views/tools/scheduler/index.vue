@@ -99,8 +99,9 @@
 
           <div class="sidebar-content">
             <VueDraggable v-model="filteredStudents" :group="{ name: 'people', pull: 'clone', put: false }"
-              :sort="false" item-key="id" ghost-class="ghost-card" class="student-list" @start="onDragStart"
-              @end="onDragEnd">
+              :sort="false" item-key="id" ghost-class="ghost-card" class="student-list" :force-fallback="true"
+              :fallback-on-body="true" :scroll-sensitivity="150" :scroll-speed="20" drag-class="dragging-card-fallback"
+              :bubble-scroll="false" @start="onDragStart" @end="onDragEnd">
               <template #item="{ element }">
                 <div class="student-card">
                   <div class="card-avatar">{{ element.name.charAt(0) }}</div>
@@ -126,20 +127,25 @@
           </div>
 
           <div class="grid-rows">
-            <div v-for="section in 10" :key="section" class="grid-row">
-              <div class="idx-cell">{{ section }}</div>
+            <div v-for="row in timeLayout" :key="row.id" class="grid-row"
+              :class="{ 'special-row': row.type === 'special' }">
+              <div class="idx-cell">
+                <span v-if="row.type === 'special'" class="special-label">{{ row.alias }}</span>
+                <span v-else>{{ row.label }}</span>
+              </div>
 
-              <div v-for="day in 7" :key="day" class="task-cell" :class="getCellHintClass(day, section)"
-                @click.self="openSelectDialog(day, section)">
-                <VueDraggable :list="getSlotList(day, section)" group="people" item-key="id" class="cell-draggable"
-                  ghost-class="ghost-tag" @change="(evt) => onSlotChange(evt, day, section)">
+              <div v-for="day in 7" :key="day" class="task-cell" :class="getCellHintClass(day, row.id)"
+                @click.self="openSelectDialog(day, row.id)">
+                <VueDraggable :list="getSlotList(day, row.id)" group="people" item-key="id" class="cell-draggable"
+                  ghost-class="ghost-tag" @change="(evt) => onSlotChange(evt, day, row.id)" :force-fallback="true"
+                  :fallback-on-body="true" :scroll-sensitivity="150" :scroll-speed="20" :bubble-scroll="false">
                   <template #item="{ element }">
-                    <el-tooltip :content="getConflictInfo(element, day, section).tooltip" placement="top"
-                      :disabled="!getConflictInfo(element, day, section).isConflict" :teleported="false">
-                      <el-tag :type="getConflictInfo(element, day, section).type" closable class="student-tag"
-                        @close="removeStudent(day, section, element.id)" @click.stop>
+                    <el-tooltip :content="getConflictInfo(element, day, row.id).tooltip" placement="top"
+                      :disabled="!getConflictInfo(element, day, row.id).isConflict" :teleported="false">
+                      <el-tag :type="getConflictInfo(element, day, row.id).type" closable class="student-tag"
+                        @close="removeStudent(day, row.id, element.id)" @click.stop>
                         {{ element.name }}
-                        <el-icon v-if="getConflictInfo(element, day, section).isConflict" class="warn-icon">
+                        <el-icon v-if="getConflictInfo(element, day, row.id).isConflict" class="warn-icon">
                           <Warning />
                         </el-icon>
                       </el-tag>
@@ -149,7 +155,7 @@
 
                 <div class="cell-action-overlay">
                   <el-button :icon="Plus" circle size="small" class="add-btn"
-                    @click.stop="openSelectDialog(day, section)" />
+                    @click.stop="openSelectDialog(day, row.id)" />
                 </div>
               </div>
             </div>
@@ -160,8 +166,9 @@
 
     <el-dialog v-model="dialogVisible" title="添加人员" width="550px" append-to-body top="5vh">
       <div class="dialog-header-custom">
-        <span class="info">正在安排: <span class="highlight">周{{ currentSelectDay }} 第{{ currentSelectSection
-        }}节</span></span>
+        <span class="info">
+          正在安排: <span class="highlight">周{{ currentSelectDay }} {{ getSectionName(currentSelectSection) }}</span>
+        </span>
         <el-input v-model="dialogSearch" placeholder="搜索姓名..." style="width: 200px;" size="small"
           prefix-icon="Search" />
       </div>
@@ -204,7 +211,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSchedulerStore } from '@/stores/modules/scheduler'
 import VueDraggable from 'vuedraggable'
@@ -356,17 +363,61 @@ const screenshotLoading = ref(false)
 const handleScreenshot = async () => {
   if (!scheduleGridRef.value) return
   screenshotLoading.value = true
+
   try {
     const element = scheduleGridRef.value
+
+    // 1. 保存原始样式
+    const originalStyles = {
+      overflow: element.style.overflow,
+      maxWidth: element.style.maxWidth,
+      width: element.style.width
+    }
+
+    // 2. 临时调整样式
+    element.style.overflow = 'visible'
+    element.style.maxWidth = 'none'
+    element.style.width = 'fit-content'
+
+    // 3. 等待样式生效
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    // 4. 计算实际内容宽度（表头的实际宽度）
+    const header = element.querySelector('.schedule-header')
+    const actualContentWidth = header ? header.scrollWidth : element.scrollWidth
+
+    // 5. 截图
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
-      ignoreElements: (el) => el.classList.contains('cell-action-overlay')
+      width: actualContentWidth,
+      height: element.scrollHeight,
+      scrollX: 0,
+      scrollY: -window.scrollY,
+      onclone: function(clonedDoc) {
+        const clonedElement = clonedDoc.querySelector('.schedule-grid')
+        if (clonedElement) {
+          clonedElement.style.overflow = 'visible'
+          clonedElement.style.maxWidth = 'none'
+          clonedElement.style.width = actualContentWidth + 'px'
+        }
+      },
+      ignoreElements: function(el) {
+        return el.classList.contains('cell-action-overlay')
+      }
     })
+
+    // 6. 恢复原始样式
+    element.style.overflow = originalStyles.overflow
+    element.style.maxWidth = originalStyles.maxWidth
+    element.style.width = originalStyles.width
+
+    // 7. 下载
     const link = document.createElement('a')
-    link.download = `橙子排班方案_第${currentWeek.value}周.png`
-    link.href = canvas.toDataURL('image/png')
+    link.download = '橙子排班方案_第' + currentWeek.value + '周.png'
+    link.href = canvas.toDataURL('image/png', 1.0)
     link.click()
     ElMessage.success('截图已生成并下载')
   } catch (error) {
@@ -376,6 +427,8 @@ const handleScreenshot = async () => {
     screenshotLoading.value = false
   }
 }
+
+
 
 // --- 筛选、拖拽、弹窗逻辑 ---
 const searchQuery = ref('')
@@ -396,9 +449,20 @@ const filteredStudents = computed(() => {
 })
 const draggingStudent = ref(null)
 const onDragStart = (evt) => {
-  if (filteredStudents.value[evt.oldIndex]) draggingStudent.value = filteredStudents.value[evt.oldIndex]
+  if (filteredStudents.value[evt.oldIndex]) {
+    draggingStudent.value = filteredStudents.value[evt.oldIndex]
+  }
+  // 【新增】黑科技：拖拽开始时，强制锁死页面的文字选择能力
+  // 这样无论你怎么乱晃鼠标，都不会出现那种难看的蓝色文字选中块
+  document.body.style.userSelect = 'none'
+  document.body.style.cursor = 'grabbing' // 强制显示“抓紧”的手势
 }
-const onDragEnd = () => { draggingStudent.value = null }
+const onDragEnd = () => {
+  draggingStudent.value = null
+  // 【新增】拖拽结束，恢复正常
+  document.body.style.userSelect = ''
+  document.body.style.cursor = ''
+}
 const getCellHintClass = (day, section) => {
   if (!draggingStudent.value) return ''
   const check = store.checkConflict(draggingStudent.value, day, section, currentWeek.value)
@@ -467,6 +531,31 @@ const dialogStudentList = computed(() => {
 const selectStudentFromDialog = (student) => {
   store.addStudentToSlot(currentSelectDay.value, currentSelectSection.value, student)
 }
+
+// --- 【新增】排班时间轴配置 (配置驱动视图) ---
+// 0:早间, 1-4:上午, 11:午间, 5-8:下午, 12:傍晚, 9-10:晚课, 13:深夜
+const timeLayout = [
+  { id: 0, label: '早', alias: '醒了', type: 'special' },
+  { id: 1, label: '1', type: 'normal' },
+  { id: 2, label: '2', type: 'normal' },
+  { id: 3, label: '3', type: 'normal' },
+  { id: 4, label: '4', type: 'normal' },
+  { id: 11, label: '午', alias: '困了', type: 'special' },
+  { id: 5, label: '5', type: 'normal' },
+  { id: 6, label: '6', type: 'normal' },
+  { id: 7, label: '7', type: 'normal' },
+  { id: 8, label: '8', type: 'normal' },
+  { id: 12, label: '晚', alias: '饿了', type: 'special' },
+  { id: 9, label: '9', type: 'normal' },
+  { id: 10, label: '10', type: 'normal' },
+  { id: 13, label: '夜', alias: '乏了', type: 'special' }
+]
+
+// 【新增】辅助函数：根据 section ID 获取显示名称 (用于弹窗标题)
+const getSectionName = (sectionId) => {
+  const target = timeLayout.find(t => t.id === sectionId)
+  return target ? (target.alias || `第${target.id}节`) : `${sectionId}`
+}
 </script>
 
 <style scoped lang="scss">
@@ -480,6 +569,7 @@ $border-color: #e4e7ed;
   background-color: $bg-color;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 // ================= UI 重构：上传页 (1:1 复刻 Course 风格) =================
@@ -700,6 +790,8 @@ $border-color: #e4e7ed;
         overflow-y: auto;
         padding: 10px;
         background: #f9f9f9;
+        overscroll-behavior: contain;
+        /* 阻止滚动事件冒泡到父容器 */
 
         .student-card {
           background: #fff;
@@ -756,13 +848,28 @@ $border-color: #e4e7ed;
       flex: 1;
       display: flex;
       flex-direction: column;
-      padding: 20px;
+      padding: 20px 20px 80px 20px;
       overflow: auto;
+      overscroll-behavior: contain;
+      /* 阻止滚动事件冒泡到父容器 */
+
+      .schedule-grid.screenshot-mode {
+        display: inline-block !important;
+        width: auto !important;
+        max-width: none !important;
+        overflow: visible !important;
+      }
 
       .grid-header {
         display: flex;
         flex-shrink: 0;
         margin-bottom: 5px;
+        position: sticky; // 添加这行
+        top: 0; // 添加这行
+        // background: #fff; // 添加这行，防止内容透出
+        z-index: 10; // 添加这行，保证在内容之上
+        padding-top: 20px; // 可选：与整体padding一致
+        padding-bottom: 15px; // 可选：增加一些底部间隙
 
         .idx-col {
           width: 40px;
@@ -784,6 +891,35 @@ $border-color: #e4e7ed;
         .grid-row {
           display: flex;
           margin-bottom: 4px;
+
+          /* 【新增】特殊时段行样式 */
+          &.special-row {
+            margin-bottom: 8px;
+            /* 特殊时段和下一节课之间多留点缝隙，增加区分度 */
+
+            .idx-cell {
+              background-color: #f2f6fc;
+              /* 稍微深一点的背景 */
+              color: $primary-color;
+              /* 橙色字体 */
+              font-size: 13px;
+              writing-mode: vertical-lr;
+              /* 竖排文字 (可选，如果文字是'早自习'可能放不下) */
+              /* 或者如果不竖排，可以用小一点的字 */
+              writing-mode: horizontal-tb;
+              font-weight: 800;
+              padding: 0 4px;
+            }
+
+            .task-cell {
+              background-color: #fafafa;
+              /* 格子背景稍微灰一点，表示非正课时间 */
+              border-style: dashed;
+              /* 边框用虚线，表示特殊性质 */
+              background: #fff;
+              /* 确保普通行背景 */
+            }
+          }
 
           .idx-cell {
             width: 40px;
@@ -1009,10 +1145,66 @@ $border-color: #e4e7ed;
   }
 }
 
-  .custom-divider {
-    height: 24px;
-    /* 调整为你期望的高度 */
-    align-self: center;
-    /* 在 flex 容器中垂直居中 */
-  }
-  </style>
+.custom-divider {
+  height: 24px;
+  /* 调整为你期望的高度 */
+  align-self: center;
+  /* 在 flex 容器中垂直居中 */
+}
+</style>
+<style>
+.dragging-card-fallback {
+  /* 强制设置背景色和边框，防止变成透明 */
+  background: #fff !important;
+  border: 1px solid #ff9c00 !important;
+  /* 拖拽时给个橙色边框提示 */
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  /* 加点阴影，更有立体感 */
+
+  /* 保持原有的 Flex 布局，防止内容塌陷 */
+  display: flex !important;
+  align-items: center;
+  width: 280px;
+  /* 强制固定宽度，防止脱离父级后宽度变样 */
+  opacity: 1 !important;
+  /* 确保不透明 */
+  z-index: 9999 !important;
+  /* 确保在最上层 */
+}
+
+/* 修复拖拽时内部元素的布局 */
+.dragging-card-fallback .card-avatar {
+  width: 36px;
+  height: 36px;
+  background: #f2f6fc;
+  color: #909399;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-weight: bold;
+}
+
+.dragging-card-fallback .card-info {
+  flex: 1;
+}
+
+.dragging-card-fallback .name {
+  font-weight: 600;
+  color: #303133;
+}
+
+.dragging-card-fallback .meta {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 2px;
+}
+
+.dragging-card-fallback .drag-icon {
+  color: #ff9c00;
+  /* 拖拽时图标变色 */
+}
+</style>
