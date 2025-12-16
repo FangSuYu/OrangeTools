@@ -1,13 +1,12 @@
 package cn.orangetools.modules.scheduler.controller;
 import cn.orangetools.common.result.Result;
+import cn.orangetools.modules.scheduler.dto.AutoScheduleRequest;
+import cn.orangetools.modules.scheduler.dto.ScheduleResultDTO;
 import cn.orangetools.modules.scheduler.dto.SchedulerStudentDTO;
 import cn.orangetools.modules.scheduler.service.SchedulerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -64,7 +63,17 @@ public class SchedulerController {
         }
     }
 
-    /* * TODO: 下一步将在这里添加 "智能计算" (auto-generate) 接口
-     * 等我们在 Service 层实现了匈牙利算法后，再来补充。
-     */
+    @PostMapping("/auto-generate")
+    public Result autoGenerate(@RequestBody AutoScheduleRequest request) {
+        // 简单的参数校验
+        if (request.getRequirements() == null || request.getRequirements().isEmpty()) {
+            return Result.error("排班需求不能为空");
+        }
+        if (request.getStudents() == null || request.getStudents().isEmpty()) {
+            return Result.error("参与人员不能为空");
+        }
+
+        ScheduleResultDTO result = schedulerService.generateSchedule(request);
+        return Result.success(result);
+    }
 }

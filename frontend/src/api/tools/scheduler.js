@@ -14,3 +14,12 @@ export function uploadAndParse(data) {
     }
   })
 }
+
+// 智能排班计算接口
+export function autoSchedule(data) {
+  return request({
+    url: '/api/tools/scheduler/auto-generate',
+    method: 'post',
+    data
+  })
+}

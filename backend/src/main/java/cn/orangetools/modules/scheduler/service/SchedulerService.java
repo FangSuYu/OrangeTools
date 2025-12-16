@@ -1,12 +1,15 @@
 package cn.orangetools.modules.scheduler.service;
 
 import cn.orangetools.common.exception.ServiceException;
+import cn.orangetools.modules.scheduler.dto.AutoScheduleRequest;
+import cn.orangetools.modules.scheduler.dto.ScheduleResultDTO;
 import cn.orangetools.modules.scheduler.dto.SchedulerRawItemDTO;
 import cn.orangetools.modules.scheduler.dto.SchedulerStudentDTO;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -39,6 +42,9 @@ import java.util.regex.Pattern;
 @Slf4j
 @Service
 public class SchedulerService {
+
+    @Autowired
+    private ScheduleStrategyFactory strategyFactory;
 
     public List<SchedulerStudentDTO> parseFiles(MultipartFile[] files) {
         if (files == null || files.length == 0) {
@@ -237,5 +243,17 @@ public class SchedulerService {
             }
             return list;
         }
+    }
+
+    public ScheduleResultDTO generateSchedule(AutoScheduleRequest request) {
+        // 1. 获取对应的算法策略
+        ScheduleStrategy strategy = strategyFactory.getStrategy(request.getStrategy());
+
+        // 2. 执行算法
+        return strategy.execute(
+                request.getStudents(),
+                request.getRequirements(),
+                request.getMaxPerWeek()
+        );
     }
 }

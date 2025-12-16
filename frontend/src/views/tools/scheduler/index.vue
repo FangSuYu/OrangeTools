@@ -212,6 +212,8 @@
     </el-dialog>
 
     <SmartSettings v-model="showSmartSettings" :student-pool="studentPool" @confirm="handleAutoSchedule" />
+    <ResultReport v-model="showResultReport" :result-data="analysisResult" @apply="applySchedule"
+      @retry="handleRetry" />
   </div>
 </template>
 
@@ -223,9 +225,11 @@ import VueDraggable from 'vuedraggable'
 import html2canvas from 'html2canvas'
 import CountUp from 'vue-countup-v3'
 import { getToolStats, reportToolUsage } from '@/api/community'
-import { Calendar, UploadFilled, Delete, Download, Search, Rank, Plus, Warning, Document, Check, Camera, DataAnalysis, Close, FolderOpened, FolderChecked,Cpu } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { autoSchedule } from '@/api/tools/scheduler'
+import { Calendar, UploadFilled, Delete, Download, Search, Rank, Plus, Warning, Document, Check, Camera, DataAnalysis, Close, FolderOpened, FolderChecked, Cpu } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import SmartSettings from './components/SmartSettings.vue'
+import ResultReport from './components/ResultReport.vue'
 
 const store = useSchedulerStore()
 const { studentPool, scheduleSolution, currentWeek } = storeToRefs(store)
@@ -565,18 +569,68 @@ const getSectionName = (sectionId) => {
 
 // 以下为智能排班相关功能代码
 const showSmartSettings = ref(false)
-
+const showResultReport = ref(false) // <--- 新增
+const analysisResult = ref({})      // <--- 新增：存储后端返回的结果
 const handleOpenSmartSettings = () => {
   showSmartSettings.value = true
 }
 
-const handleAutoSchedule = (payload) => {
-  console.log('开始智能排班，参数：', payload)
-  // TODO: 这里调用后端接口
-  // loading.value = true
-  // await api.autoSchedule(payload) ...
-  // loading.value = false
-  ElMessage.success('配置已提交，算法接入中...')
+// 处理：配置提交 -> (模拟后端计算) -> 打开报告
+const handleAutoSchedule = async (configPayload) => {
+  // 1. 组装完整请求包
+  // 我们需要把 studentPool 里的对象转换一下，只传算法需要的字段（id, name, busySlots）
+  // 假设 studentPool 里的每个学生对象已经有 scheduleRaw (原始课表数据)
+  const studentsForBackend = studentPool.value.map(s => ({
+    id: s.id,
+    name: s.name,
+    // 将课表转换为字符串数组 ["1_1", "1_2"]
+    busySlots: s.scheduleRaw.map(item => `${item.day}_${item.section}`)
+  }))
+
+  const requestData = {
+    ...configPayload, // 包含 strategy, requirements, maxPerWeek 等
+    students: studentsForBackend
+  }
+
+  console.log('发送给后端的完整数据:', requestData)
+
+  const loadingInstance = ElLoading.service({
+    text: '正在进行智能运算...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+
+  try {
+    // 2. 调用真实后端 (取消注释)
+    const res = await autoSchedule(requestData)
+
+    // 3. 赋值结果 (适配后端返回结构)
+    analysisResult.value = res
+    showResultReport.value = true
+
+    // --- 暂时保留 Mock 用于测试 UI ---
+    setTimeout(() => {
+        // ... 原来的 Mock 代码 ...
+        loadingInstance.close()
+    }, 1000)
+    // -------------------------------
+
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('排班计算失败')
+    loadingInstance.close()
+  }
+}
+
+// 处理：应用结果 (报告页点击“应用”后触发)
+const applySchedule = (solution) => {
+  store.scheduleSolution = solution // 直接覆盖 Store
+  ElMessage.success('排班方案已应用！')
+}
+
+// 处理：重试 (报告页点击“调整参数”后触发)
+const handleRetry = () => {
+  showResultReport.value = false
+  showSmartSettings.value = true // 回到配置页
 }
 </script>
 
