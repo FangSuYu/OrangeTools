@@ -67,8 +67,8 @@
           <el-button type="danger" plain :icon="Delete" @click="handleClear">重置</el-button>
 
           <el-tooltip content="截图分享" placement="bottom">
-            <el-button type="primary" plain :icon="Camera" @click="handleScreenshot"
-              :loading="screenshotLoading" style="margin-right: 20px;">
+            <el-button type="primary" plain :icon="Camera" @click="handleScreenshot" :loading="screenshotLoading"
+              style="margin-right: 20px;">
             </el-button>
           </el-tooltip>
         </div>
@@ -161,7 +161,7 @@
     <el-dialog v-model="dialogVisible" title="添加人员" width="550px" append-to-body top="5vh">
       <div class="dialog-header-custom">
         <span class="info">正在安排: <span class="highlight">周{{ currentSelectDay }} 第{{ currentSelectSection
-            }}节</span></span>
+        }}节</span></span>
         <el-input v-model="dialogSearch" placeholder="搜索姓名..." style="width: 200px;" size="small"
           prefix-icon="Search" />
       </div>
@@ -173,6 +173,15 @@
             <div class="avatar">{{ student.name.charAt(0) }}</div>
             <div class="text">
               <div class="name">{{ student.name }}</div>
+
+              <div class="meta-info">
+                <span class="meta-item grade">{{ student.grade }}级</span>
+                <span class="divider">|</span>
+                <span class="meta-item college" :title="student.college">{{ student.college }}</span>
+                <span class="divider">|</span>
+                <span class="meta-item major" :title="student.major">{{ student.major }}</span>
+              </div>
+
               <div class="desc" v-if="student.isAdded">
                 <el-tag size="small" type="info" effect="plain">已添加</el-tag>
               </div>
@@ -202,7 +211,7 @@ import VueDraggable from 'vuedraggable'
 import html2canvas from 'html2canvas'
 import CountUp from 'vue-countup-v3'
 import { getToolStats, reportToolUsage } from '@/api/community'
-import { Calendar, UploadFilled, Delete, Download, Search, Rank, Plus, Warning, Document, Check, Camera, DataAnalysis, Close,FolderOpened,FolderChecked } from '@element-plus/icons-vue'
+import { Calendar, UploadFilled, Delete, Download, Search, Rank, Plus, Warning, Document, Check, Camera, DataAnalysis, Close, FolderOpened, FolderChecked } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const store = useSchedulerStore()
@@ -432,13 +441,23 @@ const openSelectDialog = (day, section) => {
 const dialogStudentList = computed(() => {
   const currentSlotStudents = getSlotList(currentSelectDay.value, currentSelectSection.value)
   const currentIds = currentSlotStudents.map(s => s.id)
+
   return studentPool.value
     .filter(s => s.name.includes(dialogSearch.value))
-    .map(s => ({
-      ...s,
-      conflictInfo: store.checkConflict(s, currentSelectDay.value, currentSelectSection.value, currentWeek.value),
-      isAdded: currentIds.includes(s.id)
-    }))
+    .map(s => {
+      // 1. 获取原始的 Store 检查结果 { conflict: boolean, reason: string }
+      const rawCheck = store.checkConflict(s, currentSelectDay.value, currentSelectSection.value, currentWeek.value)
+
+      return {
+        ...s,
+        // 2. 这里的 conflictInfo 必须手动构造，确保模板里的 .isConflict 能读到值
+        conflictInfo: {
+          isConflict: rawCheck.conflict, // 映射 conflict -> isConflict
+          reason: rawCheck.reason
+        },
+        isAdded: currentIds.includes(s.id)
+      }
+    })
     .sort((a, b) => {
       if (a.isAdded !== b.isAdded) return a.isAdded ? 1 : -1
       if (a.conflictInfo.isConflict !== b.conflictInfo.isConflict) return a.conflictInfo.isConflict ? 1 : -1
@@ -919,19 +938,81 @@ $border-color: #e4e7ed;
       }
 
       .text {
+        display: flex;
+        /* 新增：改为 flex 布局 */
+        flex-direction: column;
+        /* 新增：垂直排列 */
+        overflow: hidden;
+        /* 新增：防止溢出 */
+
         .name {
           font-weight: 600;
+          font-size: 15px;
+          /* 微调：稍微加大名字字号 */
+          color: #303133;
+        }
+
+        /* 【新增】元数据样式 */
+        .meta-info {
+          display: flex;
+          /* 关键：改为 Flex 布局，让大家排排坐 */
+          align-items: center;
+          /* 垂直居中 */
+          font-size: 12px;
+          color: #909399;
+          margin: 4px 0;
+
+          /* 注意：删掉父级原来的 white-space, overflow, text-overflow */
+          /* 这些属性要移到子元素里去 */
+
+          .divider {
+            margin: 0 4px;
+            color: #e0e0e0;
+            flex-shrink: 0;
+            /* 分割线永远不许缩小 */
+          }
+
+          /* 通用的截断逻辑 */
+          .meta-item {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          /* --- 关键：分别为三者设置最大宽度 --- */
+          /* 你可以根据实际弹窗宽度微调这些 px 值 */
+
+          .grade {
+            max-width: 50px;
+            /* 年级一般很短，50px 够了 */
+            flex-shrink: 0;
+            /* 年级尽量不要被压缩 */
+          }
+
+          .college {
+            max-width: 140px;
+            /* 学院给最大的空间，超过显示 ... */
+          }
+
+          .major {
+            max-width: 100px;
+            /* 专业给中等空间，超过显示 ... */
+          }
         }
 
         .desc {
-          margin-top: 2px;
+          margin-top: 0;
+          /* 修改：去掉之前的 margin-top，由 meta-info 控制间距 */
         }
       }
     }
   }
 }
-.custom-divider {
-  height: 24px; /* 调整为你期望的高度 */
-  align-self: center; /* 在 flex 容器中垂直居中 */
-}
-</style>
+
+  .custom-divider {
+    height: 24px;
+    /* 调整为你期望的高度 */
+    align-self: center;
+    /* 在 flex 容器中垂直居中 */
+  }
+  </style>
