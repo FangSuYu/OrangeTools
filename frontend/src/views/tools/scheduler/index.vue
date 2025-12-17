@@ -239,7 +239,7 @@ const hasData = computed(() => studentPool.value && studentPool.value.length > 0
 // --- 统计与教程 ---
 const usageCount = ref(0)
 // 教程链接
-const TUTORIAL_LINK = 'https://ai.feishu.cn/docx/WYp1dER7AoWzCox9viDcXaCYnAb?from=from_copylink' // 示例链接，可按需修改
+const TUTORIAL_LINK = 'https://ai.feishu.cn/docx/InhNdj8dPooPGWxAAEXcGP9Fndf?from=from_copylink' // 示例链接，可按需修改
 
 const openTutorial = () => {
   window.open(TUTORIAL_LINK, '_blank')
