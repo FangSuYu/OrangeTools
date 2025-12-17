@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,4 +27,6 @@ public class RawCourseItem {
     private Integer day; // 1-7 (周一到周日)
     private Integer slot; // 1-10 (节次)
     private List<Integer> busyWeeks; // 这节课忙碌的周次列表，如 [1, 2, 3, ... 16]
+    // 【新增】存储该时间段内所有课程的详细信息
+    private List<CourseDetail> courseDetails = new ArrayList<>();
 }

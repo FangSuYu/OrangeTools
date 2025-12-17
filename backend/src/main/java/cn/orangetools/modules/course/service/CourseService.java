@@ -130,8 +130,17 @@ public class CourseService {
                         int actualColIndex = mondayColIndex + dayOffset;
                         String cellContent = rowData.get(actualColIndex);
 
-                        // 解析出这节课所有的忙碌周次
-                        List<Integer> busyWeeks = parseWeeksFromCell(cellContent);
+                        // 【修改点 1】解析详细信息，而不是只解析数字
+                        List<CourseDetail> details = parseDetailsFromCell(cellContent);
+
+                        // 【修改点 2】计算忙碌周次并集 (兼容旧逻辑，用于前端快速计算热力图)
+                        Set<Integer> busyWeekSet = new HashSet<>();
+                        for (CourseDetail d : details) {
+                            if (d.getWeeks() != null) {
+                                busyWeekSet.addAll(d.getWeeks());
+                            }
+                        }
+                        List<Integer> busyWeeks = new ArrayList<>(busyWeekSet);
 
                         // 如果有忙碌周次，就记录下来
                         if (!busyWeeks.isEmpty()) {
@@ -143,8 +152,13 @@ public class CourseService {
                             // 存入当前学生的课表
                             if (this.currentStudent != null) {
                                 StudentSchedule schedule = scheduleMap.get(this.currentStudent);
-                                // Day 是 1-7
-                                schedule.addCourse(new RawCourseItem(dayOffset + 1, slotIndex, busyWeeks));
+                                // 【修改点 3】构造 RawCourseItem，同时存入 busyWeeks 和 courseDetails
+                                RawCourseItem item = new RawCourseItem();
+                                item.setDay(dayOffset + 1);
+                                item.setSlot(slotIndex);
+                                item.setBusyWeeks(busyWeeks);      // 旧字段 (必须保留)
+                                item.setCourseDetails(details);    // 新字段 (本次新增)
+                                schedule.addCourse(item);
                             }
                         }
                     }
@@ -156,62 +170,133 @@ public class CourseService {
         public void doAfterAllAnalysed(AnalysisContext context) {}
 
         /**
-         * 【核心算法升级】从单元格内容中解析出所有忙碌的周次列表
-         * 返回: [1, 2, 3, 4, 8, 9] 这种列表
+         * 【核心升级】从单元格解析完整的课程详情
          */
-        private List<Integer> parseWeeksFromCell(String content) {
-            List<Integer> result = new ArrayList<>();
-            if (content == null || content.trim().length() <= 1) return result;
-            if (content.contains("无课") || content.contains("时间段空闲")) return result;
+        private List<CourseDetail> parseDetailsFromCell(String content) {
+            List<CourseDetail> details = new ArrayList<>();
+            // 判空逻辑
+            if (content == null || content.trim().length() <= 1) return details;
+            if (content.contains("无课") || content.contains("时间段空闲")) return details;
 
-            // 1. 切割课程 (省略号分隔)
-            String[] courses = content.split("[…。\\.]+");
+            // 1. 切割课程：使用 "……" (至少两个) 作为分隔符
+            // 你的示例中是 "………………"，这里用正则兼容不同长度的省略号
+            String[] courseBlocks = content.split("…{2,}");
 
-            for (String course : courses) {
-                if (course.trim().isEmpty()) continue;
+            for (String block : courseBlocks) {
+                if (block.trim().isEmpty()) continue;
 
-                // 2. 提取周次字符串
-                Pattern pattern = Pattern.compile("[【\\[](.*?)[周\\]】]");
-                Matcher matcher = pattern.matcher(course);
-
-                if (matcher.find()) {
-                    String weekStr = matcher.group(1); // "2-6,8"
-                    List<Integer> parsed = expandWeeks(weekStr);
-                    result.addAll(parsed);
-                } else {
-                    // 没写周次，默认 1-20 周都忙 (兜底策略)
-                    for (int i = 1; i <= 20; i++) result.add(i);
+                // 2. 按行切割 (提取三行信息)
+                String[] lines = block.trim().split("\n");
+                List<String> validLines = new ArrayList<>();
+                for (String line : lines) {
+                    if (line.trim().length() > 0) validLines.add(line.trim());
                 }
+
+                if (validLines.isEmpty()) continue;
+
+                CourseDetail detail = new CourseDetail();
+
+                // 第一行：课程名
+                detail.setName(validLines.get(0));
+
+                // 第二行：教师 + 周次 (例如：杜洪霞【2-6,8周】)
+                if (validLines.size() > 1) {
+                    String line2 = validLines.get(1);
+                    // 正则：任意字符(Group1:老师) + 【 + 内容(Group2:周次) + 周/】
+                    // 示例：杜洪霞【2-6,8周】
+                    // 【修复】正则改为严格匹配方括号内部的所有内容
+                    // ^(.*?): 教师姓名
+                    // [【\\[]: 左括号
+                    // (.*?): 核心周次内容 (可能包含"周")
+                    // [】\\]]$: 右括号结尾
+                    Pattern p = Pattern.compile("^(.*?)[【\\[](.*?)[】\\]]$");
+                    Matcher m = p.matcher(line2);
+                    if (m.find()) {
+                        detail.setTeacher(m.group(1).trim());
+                        String weekStrRaw = m.group(2).trim();
+                        String weekStrClean = weekStrRaw.replaceAll("周", "");
+                        detail.setRawWeekStr(weekStrRaw.endsWith("周") ? weekStrRaw : weekStrRaw + "周"); // 修正展示文本，避免"周周"
+                        detail.setWeeks(expandWeeks(weekStrClean)); // 传入干净的数字字符串
+                    } else {
+                        // 格式不匹配兜底
+                        detail.setTeacher(line2);
+                        detail.setWeeks(new ArrayList<>());
+                    }
+                } else {
+                    detail.setWeeks(new ArrayList<>());
+                }
+
+                // 第三行：地点
+                if (validLines.size() > 2) {
+                    detail.setLocation(validLines.get(2));
+                } else {
+                    detail.setLocation("未知地点");
+                }
+
+                details.add(detail);
             }
-            return result;
+            return details;
         }
 
         /**
-         * 展开周次字符串
-         * "2-4,6" -> [2, 3, 4, 6]
+         * 展开周次 (支持逗号、连字符、单双周)
+         * 输入: "3-5(单),8-10,16-18(双)"
+         * 输出: [3, 5, 8, 9, 10, 16, 18]
          */
         private List<Integer> expandWeeks(String weekStr) {
             List<Integer> list = new ArrayList<>();
-            try {
-                String[] parts = weekStr.split("[,，]");
-                for (String part : parts) {
-                    if (part.contains("-")) {
-                        String[] range = part.split("-");
-                        int start = Integer.parseInt(range[0]);
-                        int end = Integer.parseInt(range[1]);
-                        for (int i = start; i <= end; i++) list.add(i);
+            if (weekStr == null || weekStr.isEmpty()) return list;
+
+            // 1. 先按逗号切割
+            String[] parts = weekStr.split("[,，]");
+            for (String part : parts) {
+                try {
+                    part = part.trim();
+                    if (part.isEmpty()) continue;
+
+                    // 【新增】检测单双周标记 (兼容中英文括号)
+                    boolean isOdd = part.contains("(单)") || part.contains("（单）");
+                    boolean isEven = part.contains("(双)") || part.contains("（双）");
+
+                    // 【新增】清理非数字字符，保留数字和连字符 (移除 (单), (双) 等)
+                    // 这一步会把 "3-5(单)" 变成 "3-5"
+                    String cleanPart = part.replaceAll("[\\(（][单双][\\)）]", "").trim();
+
+                    if (cleanPart.contains("-")) {
+                        // 2. 处理连字符范围 "3-5"
+                        String[] range = cleanPart.split("-");
+                        if (range.length >= 2) {
+                            int start = Integer.parseInt(range[0].trim());
+                            int end = Integer.parseInt(range[1].trim());
+                            for (int i = start; i <= end; i++) {
+                                // 【新增】根据单双周标记过滤
+                                if (isOdd) {
+                                    if (i % 2 != 0) list.add(i);
+                                } else if (isEven) {
+                                    if (i % 2 == 0) list.add(i);
+                                } else {
+                                    list.add(i); // 无标记，全部添加
+                                }
+                            }
+                        }
                     } else {
-                        list.add(Integer.parseInt(part));
+                        // 3. 处理单个数字 "8"
+                        int val = Integer.parseInt(cleanPart.trim());
+                        // 单个数字通常不带单双标记，但为了严谨也加上判断
+                        if (isOdd) {
+                            if (val % 2 != 0) list.add(val);
+                        } else if (isEven) {
+                            if (val % 2 == 0) list.add(val);
+                        } else {
+                            list.add(val);
+                        }
                     }
+                } catch (Exception e) {
+                    log.warn("周次片段解析异常: " + part + " in " + weekStr);
                 }
-            } catch (Exception e) {
-                // 解析失败忽略
             }
             return list;
         }
-
-        // ... (extractStudentInfo 和 getValueByRegex 保持不变，请直接保留你上一次的代码) ...
-        // 为了篇幅我不重复贴 extractStudentInfo 了，它不需要变
         private StudentInfo extractStudentInfo(String text) {
             StudentInfo info = new StudentInfo();
             String cleanText = text.replaceAll("：", ":").replaceAll("\\s+", " ");
