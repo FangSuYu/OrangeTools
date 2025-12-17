@@ -1,4 +1,4 @@
-<div align="center">   <img src="./frontend/src/assets/favicon.png" alt="OrangeTools Logo" width="120">   <h1>🍊 OrangeTools (橙子工具箱)</h1>      <p>     <b>为重庆城市职业学院（城职）学子打造的一站式开源校园工具平台</b>   </p>    <p>     <a href="https://github.com/FangSuYu/OrangeTools/stargazers"><img src="https://img.shields.io/github/stars/FangSuYu/OrangeTools?color=orange&logo=github" alt="GitHub stars"></a>     <a href="https://github.com/FangSuYu/OrangeTools/blob/main/LICENSE"><img src="https://img.shields.io/github/license/FangSuYu/OrangeTools?color=blue" alt="License"></a>     <img src="https://img.shields.io/badge/Vue-3.5-42b883?logo=vue.js" alt="Vue 3">     <img src="https://img.shields.io/badge/Spring%20Boot-3.0+-6db33f?logo=springboot" alt="Spring Boot">     <img src="https://img.shields.io/badge/Status-v1.0.0%20Released-success" alt="Status">   </p> </div>
+<div align="center">   <img src="./frontend/src/assets/favicon.png" alt="OrangeTools Logo" width="120">   <h1>🍊 OrangeTools (橙子工具箱)</h1>      <p>     <b>为重庆城市职业学院（城职）学子打造的一站式开源校园工具平台</b>   </p>    <p>     <a href="https://github.com/FangSuYu/OrangeTools/stargazers"><img src="https://img.shields.io/github/stars/FangSuYu/OrangeTools?color=orange&logo=github" alt="GitHub stars"></a>     <a href="https://github.com/FangSuYu/OrangeTools/blob/main/LICENSE"><img src="https://img.shields.io/github/license/FangSuYu/OrangeTools?color=blue" alt="License"></a>     <img src="https://img.shields.io/badge/Vue-3.5-42b883?logo=vue.js" alt="Vue 3">     <img src="https://img.shields.io/badge/Spring%20Boot-3.0+-6db33f?logo=springboot" alt="Spring Boot">     <img src="https://img.shields.io/badge/Status-v2.3.0%20Released-success" alt="Status">   </p> </div>
 
 ---
 
@@ -10,11 +10,11 @@
 
 在线体验：orangetools.cn
 
-> **当前版本**: `v2.0.0` (稳定版)
+> **当前版本**: `v2.3.0` (稳定版+部分测试版)
 >
 > 当前版本为稳定版，且线上版本已经更新为当前版本。
 >
-> 该版本相较于以往版本中，主要新增了对登录注册的邮箱服务支持。
+> 该版本相较于以往版本中，主要对课表统计助手新增了更多的信息查看，以及新增了智能排班助手小工具。
 
 ---
 
@@ -25,10 +25,9 @@
 - **每日一言**：接入 Hitokoto 一言接口，每次登录都有新灵感。
 - **快捷导航**：卡片式入口，直达核心功能。
 
-### 📅 2. 课表空闲统计助手 (Course Tool)
-- **Excel 解析**：基于 EasyExcel，支持批量上传学生课表。
-- **智能计算**：自动分析院系/专业/年级在特定周次的空闲情况。
-- **热力图展示**：直观展示忙碌/空闲时段，支持一键复制空闲人员名单。
+### 📅 2. 常用工具 （Common tools）
+- **课表空闲统计助手**：批量上传 Excel 课表，一键分析全员空闲时间。
+- **智能排班助手**：批量上传 Excel 课表，一键生成智能排班方案，支持手动调整。
 
 ### 🎋 3. 社区许愿墙 (Wishlist)
 - **极简互动**：用户可提交功能建议或 Bug 反馈，默认公开透明，项目前期的反馈入口。
@@ -131,6 +130,7 @@ OrangeTools/
 │   │   └── modules/          # 业务模块 (插件式开发)
 │   │       ├── community/    # 社区模块 (许愿墙, 荣誉墙)
 │   │       └── course/       # 课表模块 (EasyExcel解析)
+│   │       └── scheduler/    # 排班模块 （工厂策略模式）
 │   └── src/main/resources/   # 配置文件
 ├── frontend/                 # 前端工程
 │   ├── src/
