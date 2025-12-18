@@ -7,6 +7,7 @@ import { Vue3Lottie } from 'vue3-lottie'
 import LoginJSON from '@/assets/login-animate.json'
 import { ElMessage } from 'element-plus'
 import { sendCode, resetPassword } from '@/api/auth'
+import BeiAnFooter from '@/components/BeiAnFooter/index.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -368,6 +369,7 @@ const showNotDevelopedMessage = () => {
 
       </div>
     </div>
+    <BeiAnFooter class="login-beian" />
   </div>
 </template>
 
@@ -379,6 +381,24 @@ const showNotDevelopedMessage = () => {
   align-items: center;
   background: linear-gradient(135deg, var(--bg-color-page) 0%, var(--el-color-primary-light-9) 100%);
   padding: 20px;
+  position: relative;
+}
+
+/* 针对登录页的特殊定位和颜色重写 */
+.login-beian {
+  position: absolute; /* 绝对定位到底部 */
+  bottom: 10px;
+  z-index: 10;
+
+  /* 样式穿透：修改组件内部 a 标签颜色 */
+  :deep(a) {
+    color: #909399; /* 或者 #eee 如果背景很深 */
+    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+
+    &:hover {
+      color: #fff; /* 登录页悬停变白 */
+    }
+  }
 }
 
 .login-box {

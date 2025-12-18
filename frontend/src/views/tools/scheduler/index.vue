@@ -24,7 +24,7 @@
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
             <div class="el-upload__text">将 Excel 课表拖到此处，或 <em>点击上传</em></div>
             <template #tip>
-              <div class="el-upload__tip">支持 .xlsx / .xls 文件，可批量上传</div>
+              <div class="el-upload__tip">支持批量上传，自动识别全学期课程</div>
             </template>
           </el-upload>
 
@@ -609,8 +609,8 @@ const handleAutoSchedule = async (configPayload) => {
 
     // --- 暂时保留 Mock 用于测试 UI ---
     setTimeout(() => {
-        // ... 原来的 Mock 代码 ...
-        loadingInstance.close()
+      // ... 原来的 Mock 代码 ...
+      loadingInstance.close()
     }, 1000)
     // -------------------------------
 
@@ -641,7 +641,6 @@ $border-color: #e4e7ed;
 
 /* 引入淡入淡出动画 (适配 transition name="el-zoom-in-center") */
 .app-container {
-  height: 100vh;
   background-color: $bg-color;
   display: flex;
   flex-direction: column;
@@ -718,6 +717,7 @@ $border-color: #e4e7ed;
   background: var(--bg-color-card);
   border-radius: 12px;
   border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .upload-section {
