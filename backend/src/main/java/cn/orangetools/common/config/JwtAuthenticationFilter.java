@@ -78,6 +78,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // 【关键】把票据存入 Security 上下文，后续的 Controller 就能知道是谁登录了
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    log.info("用户 [{}] Token 验证通过", username);
                 }
             }
 

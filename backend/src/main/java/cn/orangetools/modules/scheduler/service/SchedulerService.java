@@ -47,7 +47,9 @@ public class SchedulerService {
     private ScheduleStrategyFactory strategyFactory;
 
     public List<SchedulerStudentDTO> parseFiles(MultipartFile[] files) {
+        log.info("开始处理文件解析任务，文件数：{}", files.length);
         if (files == null || files.length == 0) {
+            log.warn("文件解析失败：未上传文件");
             throw new ServiceException("请至少上传一个 Excel 文件");
         }
 
@@ -55,12 +57,14 @@ public class SchedulerService {
 
         for (MultipartFile file : files) {
             try {
+                log.info("正在解析文件：{}", file.getOriginalFilename());
                 SchedulerExcelParser parser = new SchedulerExcelParser();
                 EasyExcel.read(file.getInputStream(), parser).sheet().doRead();
 
                 if (parser.getStudentDTO() != null) {
                     resultList.add(parser.getStudentDTO());
                 }
+                log.info("文件解析成功：{}", file.getOriginalFilename());
             } catch (IOException e) {
                 log.error("文件流读取失败: {}", file.getOriginalFilename(), e);
                 throw new ServiceException("文件读取失败：" + file.getOriginalFilename());
@@ -69,12 +73,12 @@ public class SchedulerService {
                 throw new ServiceException("解析异常(" + file.getOriginalFilename() + "): " + e.getMessage());
             }
         }
-
+        log.info("所有文件解析完成，共获取 {} 条记录", resultList.size());
         return resultList;
     }
 
     private static class SchedulerExcelParser extends AnalysisEventListener<Map<Integer, String>> {
-
+        // ... (保持内部类不变) ...
         private SchedulerStudentDTO studentDTO = new SchedulerStudentDTO();
 
         private Integer mondayColIndex = null;
@@ -297,14 +301,17 @@ public class SchedulerService {
     }
 
     public ScheduleResultDTO generateSchedule(AutoScheduleRequest request) {
+        log.info("开始执行自动排班，策略：{}", request.getStrategy());
         // 1. 获取对应的算法策略
         ScheduleStrategy strategy = strategyFactory.getStrategy(request.getStrategy());
 
         // 2. 执行算法
-        return strategy.execute(
+        ScheduleResultDTO result = strategy.execute(
                 request.getStudents(),
                 request.getRequirements(),
                 request.getMaxPerWeek()
         );
+        log.info("排班逻辑执行完成");
+        return result;
     }
 }

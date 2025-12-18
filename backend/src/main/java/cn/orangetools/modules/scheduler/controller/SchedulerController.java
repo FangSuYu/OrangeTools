@@ -51,8 +51,10 @@ public class SchedulerController {
     @PostMapping("/parse")
     public Result<List<SchedulerStudentDTO>> parseFiles(@RequestParam("files") MultipartFile[] files) {
         try {
+            log.info("scheduler-开始解析课表文件，数量：{}", files.length);
             // 调用 Service 进行解析
             List<SchedulerStudentDTO> data = schedulerService.parseFiles(files);
+            log.info("scheduler-课表解析完成，共解析出 {} 名学生数据", data.size());
 
             // 返回成功数据
             return Result.success(data);
@@ -65,15 +67,20 @@ public class SchedulerController {
 
     @PostMapping("/auto-generate")
     public Result autoGenerate(@RequestBody AutoScheduleRequest request) {
+        log.info("scheduler-收到自动排班请求，策略：{}，学生人数：{}，需求时段数：{}", 
+                request.getStrategy(), request.getStudents().size(), request.getRequirements().size());
         // 简单的参数校验
         if (request.getRequirements() == null || request.getRequirements().isEmpty()) {
+            log.warn("scheduler-排班需求为空");
             return Result.error("排班需求不能为空");
         }
         if (request.getStudents() == null || request.getStudents().isEmpty()) {
+            log.warn("scheduler-参与人员为空");
             return Result.error("参与人员不能为空");
         }
 
         ScheduleResultDTO result = schedulerService.generateSchedule(request);
+        log.info("scheduler-排班完成，产生警告数：{}", result.getWarnings().size());
         return Result.success(result);
     }
 }

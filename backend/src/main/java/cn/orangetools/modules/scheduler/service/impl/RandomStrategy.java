@@ -4,6 +4,7 @@ import cn.orangetools.modules.scheduler.dto.ScheduleRequirement;
 import cn.orangetools.modules.scheduler.dto.ScheduleResultDTO;
 import cn.orangetools.modules.scheduler.dto.StudentCandidate;
 import cn.orangetools.modules.scheduler.service.ScheduleStrategy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -18,10 +19,12 @@ import java.util.stream.Collectors;
  * @license GPL-3.0 License
  */
 @Component("RANDOM")
+@Slf4j
 public class RandomStrategy implements ScheduleStrategy {
 
     @Override
     public ScheduleResultDTO execute(List<StudentCandidate> students, List<ScheduleRequirement> requirements, int maxPerWeek) {
+        log.info("策略执行开始：RANDOM，学生人数：{}，需求项：{}", students.size(), requirements.size());
         ScheduleResultDTO result = new ScheduleResultDTO();
         Map<String, List<StudentCandidate>> solution = new HashMap<>();
         List<String> warnings = new ArrayList<>();
@@ -67,6 +70,7 @@ public class RandomStrategy implements ScheduleStrategy {
         result.setSolution(solution);
         result.setWarnings(warnings);
         result.setTotalNeeds(totalNeeds);
+        log.info("策略执行结束：RANDOM，总需求：{}", totalNeeds);
         return result;
     }
 }

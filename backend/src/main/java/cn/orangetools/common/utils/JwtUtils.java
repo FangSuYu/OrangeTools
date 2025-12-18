@@ -3,6 +3,7 @@ package cn.orangetools.common.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ import java.util.function.Function;
  * @license GPL-3.0 License
  */
 @Component // 注册为 Bean，方便在其他地方注入
+@Slf4j
 public class JwtUtils {
 
     // 1. 密钥：这就像印钞厂的母版，绝对不能泄露！
@@ -38,6 +40,7 @@ public class JwtUtils {
 
     // ================== 核心功能 1：生成 Token ==================
     public String generateToken(String username) {
+        log.info("jwt-生成 Token，用户：{}", username);
         return Jwts.builder()
                 .subject(username) // 把用户名存进 Token
                 .issuedAt(new Date(System.currentTimeMillis())) // 签发时间
@@ -55,7 +58,11 @@ public class JwtUtils {
     // 验证 Token 是否有效
     public boolean isTokenValid(String token, String username) {
         final String extractedUsername = extractUsername(token);
-        return (extractedUsername.equals(username) && !isTokenExpired(token));
+        boolean isValid = (extractedUsername.equals(username) && !isTokenExpired(token));
+        if (!isValid) {
+            log.warn("jwt-Token 无效或不匹配，Token用户：{}，目标用户：{}", extractedUsername, username);
+        }
+        return isValid;
     }
 
     // --- 内部辅助方法 ---
@@ -66,15 +73,24 @@ public class JwtUtils {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey()) // 使用公钥验证签名
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        try {
+            return Jwts.parser()
+                    .verifyWith(getSigningKey()) // 使用公钥验证签名
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (Exception e) {
+            log.error("jwt-解析 Token 失败：{}", e.getMessage());
+            throw e;
+        }
     }
 
     private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        boolean expired = extractExpiration(token).before(new Date());
+        if (expired) {
+            log.warn("jwt-Token 已过期");
+        }
+        return expired;
     }
 
     private Date extractExpiration(String token) {

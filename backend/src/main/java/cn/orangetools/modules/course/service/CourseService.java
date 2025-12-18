@@ -28,7 +28,9 @@ import java.util.regex.Pattern;
 public class CourseService {
 
     public AnalysisResult analyze(MultipartFile[] files) {
+        log.info("开始处理课表分析，接收文件数量：{}", files.length);
         if (files == null || files.length == 0) {
+            log.warn("分析失败，未上传文件");
             throw new ServiceException("请至少上传一个 Excel 文件");
         }
 
@@ -46,8 +48,10 @@ public class CourseService {
 
         for (MultipartFile file : files) {
             try {
+                log.info("开始解析文件：{}", file.getOriginalFilename());
                 // 解析器
                 new ExcelParser(file, scheduleMap, maxWeekRef).parse();
+                log.info("文件解析完成：{}", file.getOriginalFilename());
             } catch (Exception e) {
                 log.error("解析异常: " + file.getOriginalFilename(), e);
             }
@@ -68,6 +72,7 @@ public class CourseService {
         result.setAllMajors(allMajors);
         result.setAllGrades(allGrades);
 
+        log.info("课表分析汇总完成，总人数：{}，最大周次：{}", result.getTotalPeople(), result.getMaxWeek());
         return result;
     }
 

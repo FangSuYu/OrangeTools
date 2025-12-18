@@ -4,6 +4,7 @@ import cn.orangetools.modules.scheduler.dto.ScheduleRequirement;
 import cn.orangetools.modules.scheduler.dto.ScheduleResultDTO;
 import cn.orangetools.modules.scheduler.dto.StudentCandidate;
 import cn.orangetools.modules.scheduler.service.ScheduleStrategy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -18,10 +19,12 @@ import java.util.stream.Collectors;
  * @license GPL-3.0 License
  */
 @Component("GREEDY_BALANCE") // 这里的名字对应前端传来的 strategy 值
+@Slf4j
 public class GreedyBalanceStrategy implements ScheduleStrategy {
 
     @Override
     public ScheduleResultDTO execute(List<StudentCandidate> students, List<ScheduleRequirement> requirements, int maxPerWeek) {
+        log.info("策略执行开始：GREEDY_BALANCE，学生人数：{}，需求项：{}", students.size(), requirements.size());
         ScheduleResultDTO result = new ScheduleResultDTO();
         Map<String, List<StudentCandidate>> solution = new HashMap<>();
         List<String> warnings = new ArrayList<>();
@@ -81,6 +84,7 @@ public class GreedyBalanceStrategy implements ScheduleStrategy {
         result.setSolution(solution);
         result.setWarnings(warnings);
         result.setTotalNeeds(totalNeeds);
+        log.info("策略执行结束：GREEDY_BALANCE，总需求：{}", totalNeeds);
         return result;
     }
 

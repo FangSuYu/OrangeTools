@@ -37,6 +37,7 @@ public class CourseController {
         log.info("开始分析课表...");
         // 核心逻辑交给 Service
         AnalysisResult result = courseService.analyze(files);
+        log.info("课表分析完成，涉及总人数：{}", result.getTotalPeople());
         return Result.success(result);
     }
 }

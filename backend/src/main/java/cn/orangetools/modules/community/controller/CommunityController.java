@@ -42,6 +42,7 @@ public class CommunityController {
 
     @PostMapping("/tools/report/{code}")
     public Result<String> reportUsage(@PathVariable String code) {
+        log.info("community-收到工具使用上报，工具代码：【{}】", code);
         toolService.reportUsage(code);
         return Result.success("ok");
     }
@@ -50,6 +51,7 @@ public class CommunityController {
 
     @PostMapping("/feedback/submit")
     public Result<String> submitFeedback(@RequestBody Feedback feedback) {
+        log.info("community-收到新反馈，标题：【{}】，是否公开：【{}】", feedback.getTitle(), feedback.getIsPublicCheck());
         feedbackService.submit(feedback);
         return Result.success("提交成功！您的建议已上墙。");
     }

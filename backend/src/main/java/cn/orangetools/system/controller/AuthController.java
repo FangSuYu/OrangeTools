@@ -59,6 +59,7 @@ public class AuthController {
     @GetMapping("/info")
     public Result<User> getUserInfo() {
         String username = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
+        log.info("auth-正在获取用户信息：【{}】", username);
         User user = authService.getUserByUsername(username); // 需要你在 AuthService 加这个方法，或者直接调 Mapper
         user.setPassword(null); // 抹除密码
         return Result.success(user);
@@ -69,6 +70,7 @@ public class AuthController {
      */
     @PostMapping("/code")
     public Result<Void> sendCode(@RequestBody SendEmailCodeDto sendEmailCodeDto) {
+        log.info("auth-请求发送邮箱验证码，邮箱：【{}】，类型：【{}】", sendEmailCodeDto.getEmail(), sendEmailCodeDto.getType());
         authService.sendCode(sendEmailCodeDto.getEmail(), sendEmailCodeDto.getType());
         return Result.success();
     }
@@ -78,7 +80,9 @@ public class AuthController {
      */
     @PostMapping("/login/email")
     public Result<String> loginEmail(@RequestBody EmailLoginDto loginDto) {
+        log.info("auth-正在尝试邮箱登录，邮箱：【{}】", loginDto.getEmail());
         String token = authService.loginEmail(loginDto);
+        log.info("auth-邮箱登录成功，邮箱：【{}】", loginDto.getEmail());
         return Result.success(token);
     }
 
@@ -87,7 +91,9 @@ public class AuthController {
      */
     @PostMapping("/password/reset")
     public Result<Void> resetPassword(@RequestBody PasswordResetDto resetDto) {
+        log.info("auth-请求重置密码，邮箱：【{}】", resetDto.getEmail());
         authService.resetPassword(resetDto);
+        log.info("auth-密码重置成功，邮箱：【{}】", resetDto.getEmail());
         return Result.success();
     }
 }

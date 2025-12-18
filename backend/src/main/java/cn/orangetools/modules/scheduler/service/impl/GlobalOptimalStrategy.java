@@ -4,6 +4,7 @@ import cn.orangetools.modules.scheduler.dto.ScheduleRequirement;
 import cn.orangetools.modules.scheduler.dto.ScheduleResultDTO;
 import cn.orangetools.modules.scheduler.dto.StudentCandidate;
 import cn.orangetools.modules.scheduler.service.ScheduleStrategy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -17,6 +18,7 @@ import java.util.*;
  * @license GPL-3.0 License
  */
 @Component("HUNGARIAN") // 对应前端的 value="HUNGARIAN"
+@Slf4j
 public class GlobalOptimalStrategy implements ScheduleStrategy {
 
     // 迭代次数：次数越多越精确，但越慢。5000次通常在 100ms 内
@@ -24,6 +26,7 @@ public class GlobalOptimalStrategy implements ScheduleStrategy {
 
     @Override
     public ScheduleResultDTO execute(List<StudentCandidate> students, List<ScheduleRequirement> requirements, int maxPerWeek) {
+        log.info("策略执行开始：HUNGARIAN (GlobalOptimal)，学生人数：{}，需求项：{}，迭代次数：{}", students.size(), requirements.size(), ITERATIONS);
 
         ScheduleResultDTO bestResult = null;
         double minVariance = Double.MAX_VALUE;
@@ -44,7 +47,7 @@ public class GlobalOptimalStrategy implements ScheduleStrategy {
                 if (minVariance == 0.0) break;
             }
         }
-
+        log.info("策略执行结束：HUNGARIAN，最小方差：{}", minVariance);
         return bestResult;
     }
 

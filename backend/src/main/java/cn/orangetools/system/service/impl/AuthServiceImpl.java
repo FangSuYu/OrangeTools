@@ -12,6 +12,7 @@ import cn.orangetools.system.model.dto.RegisterDto;
 import cn.orangetools.system.service.AuthService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
     private final UserMapper userMapper;
@@ -49,11 +51,13 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String register(RegisterDto registerDto) {
+        log.info("开始处理用户注册：{}", registerDto.getUsername());
         // 1. 检查用户名是否已存在
         Long count = userMapper.selectCount(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, registerDto.getUsername()));
 
         if (count > 0) {
+            log.warn("注册失败，用户名已存在：{}", registerDto.getUsername());
             throw new ServiceException("用户名已存在");
         }
 
@@ -62,6 +66,7 @@ public class AuthServiceImpl implements AuthService {
             Long stuCount = userMapper.selectCount(new LambdaQueryWrapper<User>()
                     .eq(User::getStudentId, registerDto.getStudentId()));
             if (stuCount > 0) {
+                log.warn("注册失败，学号已被绑定：{}", registerDto.getStudentId());
                 throw new ServiceException("该学号已被绑定");
             }
         }
@@ -79,6 +84,7 @@ public class AuthServiceImpl implements AuthService {
             String codeKey = "auth:code:register:" + registerDto.getEmail();
             String cacheCode = redisTemplate.opsForValue().get(codeKey);
             if (cacheCode == null || !cacheCode.equals(registerDto.getCode())) {
+                log.warn("注册失败，邮箱验证码错误或过期：{}", registerDto.getEmail());
                 throw new ServiceException("邮箱验证码错误或已过期");
             }
             redisTemplate.delete(codeKey);
@@ -87,6 +93,7 @@ public class AuthServiceImpl implements AuthService {
             Long emailCount = userMapper.selectCount(new LambdaQueryWrapper<User>()
                     .eq(User::getEmail, registerDto.getEmail()));
             if (emailCount > 0) {
+                log.warn("注册失败，邮箱已被注册：{}", registerDto.getEmail());
                 throw new ServiceException("该邮箱已被注册");
             }
             user.setEmail(registerDto.getEmail());
@@ -98,12 +105,14 @@ public class AuthServiceImpl implements AuthService {
 
         // 6. 存入数据库
         userMapper.insert(user);
+        log.info("用户注册成功：{}", user.getUsername());
 
         return user.getUsername();
     }
 
     @Override
     public String login(LoginDto loginDto) {
+        log.info("用户尝试登录：{}", loginDto.getUsername());
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginDto.getUsername(),
@@ -121,6 +130,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void sendCode(String email, String type) {
+        log.info("准备发送验证码，邮箱：{}，类型：{}", email, type);
         if (email == null || !email.contains("@")) {
             throw new ServiceException("邮箱格式不正确");
         }
@@ -148,7 +158,9 @@ public class AuthServiceImpl implements AuthService {
             message.setSubject("OrangeTools 验证码");
             message.setText("【OrangeTools】您的验证码是：" + code + "，有效期5分钟。请勿泄露给他人。");
             mailSender.send(message);
+            log.info("验证码发送成功，邮箱：{}", email);
         } catch (Exception e) {
+            log.error("邮件发送失败，邮箱：{}", email, e);
             redisTemplate.delete(key);
             throw new ServiceException("邮件发送失败，请稍后重试");
         }
@@ -156,36 +168,44 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String loginEmail(EmailLoginDto loginDto) {
+        log.info("用户尝试邮箱登录：{}", loginDto.getEmail());
         String codeKey = "auth:code:login:" + loginDto.getEmail();
         String cacheCode = redisTemplate.opsForValue().get(codeKey);
         if (cacheCode == null || !cacheCode.equals(loginDto.getCode())) {
+            log.warn("邮箱登录失败，验证码错误或过期：{}", loginDto.getEmail());
             throw new ServiceException("验证码错误或已过期");
         }
         redisTemplate.delete(codeKey);
 
         User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail, loginDto.getEmail()));
         if (user == null) {
+            log.warn("邮箱登录失败，用户不存在：{}", loginDto.getEmail());
             throw new ServiceException("用户不存在");
         }
+        log.info("邮箱登录成功，用户：{}", user.getUsername());
         return jwtUtils.generateToken(user.getUsername());
     }
 
     @Override
     public void resetPassword(PasswordResetDto resetDto) {
+        log.info("用户尝试重置密码，邮箱：{}", resetDto.getEmail());
         String codeKey = "auth:code:reset:" + resetDto.getEmail();
         String cacheCode = redisTemplate.opsForValue().get(codeKey);
         if (cacheCode == null || !cacheCode.equals(resetDto.getCode())) {
+            log.warn("重置密码失败，验证码错误或过期：{}", resetDto.getEmail());
             throw new ServiceException("验证码错误或已过期");
         }
         redisTemplate.delete(codeKey);
 
         User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail, resetDto.getEmail()));
         if (user == null) {
+            log.warn("重置密码失败，用户不存在：{}", resetDto.getEmail());
             throw new ServiceException("用户不存在");
         }
 
         user.setPassword(passwordEncoder.encode(resetDto.getNewPassword()));
         userMapper.updateById(user);
+        log.info("密码重置成功，用户：{}", user.getUsername());
     }
 
     // ================= 预留扩展接口 =================

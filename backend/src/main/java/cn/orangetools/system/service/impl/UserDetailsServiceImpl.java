@@ -3,6 +3,7 @@ package cn.orangetools.system.service.impl;
 import cn.orangetools.system.entity.User;
 import cn.orangetools.system.mapper.UserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -19,6 +20,7 @@ import java.util.Collections;
  * @license GPL-3.0 License
  */
 @Service
+@Slf4j
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserMapper userMapper;
@@ -31,13 +33,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // 1. 去数据库查人
+        log.info("开始加载用户详情，用户名：{}", username);
         // SQL: select * from sys_user where username = 'xxx'
         User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
                 .eq(User::getUsername, username));
 
         if (user == null) {
+            log.warn("用户不存在：{}", username);
             throw new UsernameNotFoundException("用户不存在");
         }
+        log.info("用户详情加载成功：{}", username);
 
         // 2. 开始翻译：把数据库查到的 user 变成 Spring Security 需要的 UserDetails
         // 这里使用的是 Spring Security 自带的 org.springframework.security.core.userdetails.User
