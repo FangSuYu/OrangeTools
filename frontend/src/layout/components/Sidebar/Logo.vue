@@ -37,7 +37,7 @@ const currentLogo = computed(() => {
       <router-link key="expand" class="sidebar-logo-link" to="/">
 
         <template v-if="showLogoImage">
-          <img v-if="currentLogo" src="@/assets/favicon.png" class="sidebar-logo">
+          <img v-if="currentLogo" src="@/assets/favicon-transparent.png" class="sidebar-logo">
           <h1 v-show="!collapse" class="sidebar-title">{{ title }}</h1>
         </template>
 

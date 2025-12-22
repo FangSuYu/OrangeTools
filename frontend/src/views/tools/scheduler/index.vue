@@ -641,6 +641,7 @@ $border-color: #e4e7ed;
 
 /* 引入淡入淡出动画 (适配 transition name="el-zoom-in-center") */
 .app-container {
+  height: calc(100vh - 90px);
   background-color: $bg-color;
   display: flex;
   flex-direction: column;
