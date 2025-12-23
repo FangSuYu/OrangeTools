@@ -82,7 +82,7 @@ const appStore = useAppStore()
   border-right: none;
   :deep(.el-menu-item), :deep(.el-sub-menu__title) {
     &:hover {
-      background-color: rgba(0,0,0,0.04);
+      background-color: var(--bg-color-hover);
     }
   }
   :deep(.el-menu-item.is-active) {

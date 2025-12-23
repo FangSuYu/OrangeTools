@@ -124,7 +124,7 @@ const isLast = (index) => {
     transition: background .3s;
     -webkit-tap-highlight-color: transparent;
     &:hover {
-      background: rgba(0, 0, 0, .025)
+      background: var(--bg-color-hover)
     }
   }
 
@@ -166,7 +166,7 @@ const isLast = (index) => {
       vertical-align: text-bottom;
       cursor: pointer;
       &:hover {
-        background: rgba(0, 0, 0, 0.025);
+        background: var(--bg-color-hover);
       }
     }
 

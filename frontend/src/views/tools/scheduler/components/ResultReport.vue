@@ -165,12 +165,12 @@ const handleApply = () => {
 </script>
 
 <style scoped lang="scss">
-$success: #67c23a;
-$warning: #e6a23c;
-$danger: #f56c6c;
-$info: #909399;
-$primary: #409eff;
-$bg-color: #f5f7fa;
+$success: var(--el-color-success);
+$warning: var(--el-color-warning);
+$danger: var(--el-color-danger);
+$info: var(--el-text-color-secondary);
+$primary: var(--el-color-primary);
+$bg-color: var(--bg-color-page);
 
 .report-container {
   padding: 10px 20px;
@@ -184,16 +184,16 @@ $bg-color: #f5f7fa;
   margin-bottom: 25px;
 
   .kpi-card {
-    background: #fff;
+    background: var(--bg-color-card);
     border-radius: 8px;
     padding: 20px;
     text-align: center;
-    border: 1px solid #ebeef5;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 12px 0 var(--shadow-color);
 
     .label { color: $info; font-size: 14px; margin-bottom: 8px; }
-    .value { font-size: 28px; font-weight: bold; margin-bottom: 8px; color: #303133; }
-    .sub { font-size: 12px; color: #c0c4cc; }
+    .value { font-size: 28px; font-weight: bold; margin-bottom: 8px; color: var(--text-color-primary); }
+    .sub { font-size: 12px; color: var(--text-color-placeholder); }
 
     &.success .value { color: $success; }
     &.danger .value { color: $danger; }
@@ -209,13 +209,13 @@ $bg-color: #f5f7fa;
     margin-bottom: 15px;
     padding-left: 10px;
     border-left: 4px solid $primary;
-    color: #303133;
+    color: var(--text-color-primary);
   }
 }
 
 /* Warning List */
 .warning-list {
-  background: #fdf6ec;
+  background: var(--el-color-warning-light-9);
   border-radius: 4px;
   padding: 15px;
   max-height: 120px;
@@ -235,10 +235,10 @@ $bg-color: #f5f7fa;
 /* Simple Bar Chart */
 .chart-section {
   .bar-chart {
-    border: 1px solid #ebeef5;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     padding: 15px;
-    background: #fff;
+    background: var(--bg-color-card);
   }
 
   .chart-row {
@@ -247,13 +247,13 @@ $bg-color: #f5f7fa;
     margin-bottom: 10px;
     &:last-child { margin-bottom: 0; }
 
-    .name { width: 60px; font-size: 13px; color: #606266; text-align: right; padding-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+    .name { width: 60px; font-size: 13px; color: var(--text-color-regular); text-align: right; padding-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
     .count { width: 40px; font-size: 12px; color: $info; padding-left: 10px; }
 
     .bar-wrapper {
       flex: 1;
       height: 10px;
-      background: #f0f2f5;
+      background: var(--el-fill-color-light);
       border-radius: 5px;
       overflow: hidden;
 
@@ -273,7 +273,7 @@ $bg-color: #f5f7fa;
     margin-top: 10px;
     text-align: right;
     font-size: 12px;
-    color: #c0c4cc;
+    color: var(--text-color-secondary);
   }
 }
 </style>

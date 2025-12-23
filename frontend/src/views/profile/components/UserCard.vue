@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useUserStore } from '@/stores/modules/user'
 import { updateProfile } from '@/api/user'
 import { ElMessage } from 'element-plus'
-import { Camera, Calendar, UserFilled, Iphone, Message } from '@element-plus/icons-vue'
+import { Camera, Iphone, Message } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const dialogVisible = ref(false)
@@ -87,17 +87,12 @@ const selectAvatar = async (avatarName) => {
 <style lang="scss" scoped>
 /* 复用父组件的 glass-card 样式，这里只需补充内部结构 */
 .glass-card {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--bg-color-card);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--border-color-light);
   border-radius: 24px;
   overflow: hidden;
   height: 580px; /* 与右侧高度对齐 */
-
-  :deep(html.dark) & {
-    background: rgba(30, 30, 30, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
 }
 
 .card-header-bg {

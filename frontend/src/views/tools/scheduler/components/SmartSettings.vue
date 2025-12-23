@@ -140,7 +140,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { Check, Clock, Edit } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -377,8 +377,8 @@ const handleConfirm = () => {
 </script>
 
 <style scoped lang="scss">
-$primary-color: #ff9c00;
-$border-color: #e4e7ed;
+$primary-color: var(--el-color-primary);
+$border-color: var(--border-color);
 
 .settings-container {
   display: flex;
@@ -391,7 +391,7 @@ $border-color: #e4e7ed;
 /* 左侧侧边栏 - Flex布局修复滚动 */
 .settings-sidebar {
   width: 320px;
-  background: #f9fafe;
+  background: var(--bg-color-page);
   border-right: 1px solid $border-color;
   padding: 20px;
   display: flex;
@@ -406,7 +406,7 @@ $border-color: #e4e7ed;
       font-size: 16px;
       font-weight: bold;
       margin-bottom: 15px;
-      color: #303133;
+      color: var(--text-color-primary);
       border-left: 4px solid $primary-color;
       padding-left: 10px;
     }
@@ -429,7 +429,7 @@ $border-color: #e4e7ed;
   }
 
   .strategy-card {
-    background: #fff;
+    background: var(--bg-color-card);
     border: 1px solid $border-color;
     border-radius: 8px;
     padding: 12px;
@@ -449,7 +449,7 @@ $border-color: #e4e7ed;
 
     &.active {
       border-color: $primary-color;
-      background: #fffcf0;
+      background: var(--el-color-primary-light-9);
     }
 
     .card-icon {
@@ -464,12 +464,12 @@ $border-color: #e4e7ed;
     .card-title {
       font-weight: bold;
       font-size: 14px;
-      color: #303133;
+      color: var(--text-color-primary);
     }
 
     .card-desc {
       font-size: 12px;
-      color: #909399;
+      color: var(--text-color-secondary);
       margin-top: 4px;
       line-height: 1.4;
     }
@@ -522,21 +522,21 @@ $border-color: #e4e7ed;
         h3 {
           font-size: 16px;
           font-weight: bold;
-          color: #303133;
+          color: var(--text-color-primary);
           margin: 0;
         }
       }
 
       .sub-text {
         font-size: 12px;
-        color: #909399;
+        color: var(--text-color-secondary);
       }
 
       .legend {
         display: flex;
         gap: 10px;
         font-size: 12px;
-        color: #606266;
+        color: var(--text-color-regular);
         align-items: center;
 
         .dot {
@@ -548,18 +548,18 @@ $border-color: #e4e7ed;
         }
 
         .zero {
-          background: #f0f2f5;
-          border: 1px solid #dcdfe6;
+          background: var(--el-fill-color-light);
+          border: 1px solid var(--border-color);
         }
 
         .normal {
-          background: #e1f3d8;
-          border: 1px solid #67c23a;
+          background: var(--el-color-success-light-9);
+          border: 1px solid var(--el-color-success);
         }
 
         .high {
-          background: #fde2e2;
-          border: 1px solid #f56c6c;
+          background: var(--el-color-danger-light-9);
+          border: 1px solid var(--el-color-danger);
         }
       }
     }
@@ -572,10 +572,10 @@ $border-color: #e4e7ed;
       display: flex;
       align-items: center;
       gap: 8px;
-      background: #fff;
+      background: var(--bg-color-card);
       padding: 4px;
       border-radius: 4px;
-      border: 1px solid #dcdfe6;
+      border: 1px solid var(--border-color);
       /* 给工具栏加个框，看起来像个整体 */
 
       .custom-input-wrapper {
@@ -584,11 +584,11 @@ $border-color: #e4e7ed;
         gap: 5px;
         margin-left: 5px;
         padding-left: 5px;
-        border-left: 1px solid #ebeef5;
+        border-left: 1px solid var(--border-color);
 
         .unit {
           font-size: 12px;
-          color: #606266;
+          color: var(--text-color-regular);
         }
       }
     }
@@ -617,11 +617,11 @@ $border-color: #e4e7ed;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #fff;
+        background: var(--bg-color-card);
         border-right: 1px solid $border-color;
         font-size: 13px;
         font-weight: bold;
-        color: #909399;
+        color: var(--text-color-secondary);
         position: sticky;
         left: 0;
         z-index: 5;
@@ -635,7 +635,7 @@ $border-color: #e4e7ed;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-right: 1px solid #ebeef5;
+        border-right: 1px solid var(--border-color-light);
       }
     }
 
@@ -644,23 +644,23 @@ $border-color: #e4e7ed;
       position: sticky;
       top: 0;
       z-index: 10;
-      background: #f9fafe;
+      background: var(--bg-color-page);
       border-bottom: 1px solid $border-color;
       height: 40px;
 
       .corner-cell {
-        background: #f9fafe;
+        background: var(--bg-color-page);
         z-index: 15;
         /* 角落层级最高 */
       }
 
       .day-header {
         font-weight: bold;
-        color: #606266;
+        color: var(--text-color-regular);
         cursor: pointer;
 
         &:hover {
-          background: #eef1f6;
+          background: var(--el-fill-color-light);
           color: $primary-color;
         }
       }
@@ -668,14 +668,14 @@ $border-color: #e4e7ed;
 
     /* 内容行 */
     .body-row {
-      border-bottom: 1px solid #ebeef5;
+      border-bottom: 1px solid var(--border-color-light);
       height: 40px;
 
       &.special-row {
         border-bottom: 2px solid $border-color;
 
         .row-header {
-          background: #fdf6ec;
+          background: var(--el-color-warning-light-9);
           color: $primary-color;
         }
       }
@@ -684,7 +684,7 @@ $border-color: #e4e7ed;
         cursor: pointer;
 
         &:hover {
-          background: #eef1f6;
+          background: var(--el-fill-color-light);
           color: $primary-color;
         }
       }
@@ -700,19 +700,19 @@ $border-color: #e4e7ed;
         }
 
         &.cell-zero {
-          background: #f5f7fa;
-          color: #c0c4cc;
+          background: var(--bg-color-page);
+          color: var(--text-color-placeholder);
         }
 
         &.cell-normal {
-          background: #f0f9eb;
-          color: #67c23a;
+          background: var(--el-color-success-light-9);
+          color: var(--el-color-success);
           font-weight: bold;
         }
 
         &.cell-high {
-          background: #fef0f0;
-          color: #f56c6c;
+          background: var(--el-color-danger-light-9);
+          color: var(--el-color-danger);
           font-weight: bold;
         }
       }

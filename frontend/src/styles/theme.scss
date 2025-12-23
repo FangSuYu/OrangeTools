@@ -11,39 +11,57 @@
   --bg-color-page: #F4F7FA;  /* 全局大背景（淡蓝灰） */
   --bg-color-card: #FFFFFF;  /* 卡片背景（纯白） */
   --bg-color-overlay: #FFFFFF; /* 弹窗/下拉菜单背景 */
+  --bg-color-hover: rgba(0, 0, 0, 0.04); /* 悬停背景色 */
 
   /* --- 3. 文字颜色 --- */
   --text-color-primary: #333333; /* 主标题 */
   --text-color-regular: #606266; /* 普通正文 */
   --text-color-secondary: #909399; /* 辅助文字 */
+  --text-color-placeholder: #a8abb2; /* 占位文字 */
 
-  /* --- 4. 布局尺寸 (【核心修复点】你之前漏了这里！) --- */
+  /* --- 4. 布局尺寸 --- */
   --header-height: 60px;     /* 顶部导航栏高度 */
   --sidebar-width: 220px;    /* 侧边栏宽度 */
 
   /* --- 5. 边框与阴影 --- */
   --border-color: #EBEEF5;   /* 边框颜色 */
+  --border-color-light: #E4E7ED; /* 浅边框 */
   --shadow-color: rgba(0, 0, 0, 0.05); /* 阴影颜色 */
+
+  /* --- 6. 特殊场景渐变 --- */
+  /* 登录页背景渐变 */
+  --bg-gradient-login: linear-gradient(135deg, var(--bg-color-page) 0%, var(--el-color-primary-light-9) 100%);
+  /* 首页欢迎卡片渐变 */
+  --bg-gradient-welcome: linear-gradient(120deg, var(--bg-color-card) 60%, var(--el-color-primary-light-9) 100%);
 }
 
 /* --- 3. 暗黑模式 (Dark Mode) 变量 --- */
 /* 当 html 标签上有 class="dark" 时，下面的变量会生效 */
 html.dark {
-  /* 品牌色通常不需要大改，但在深色背景下可能需要微调，这里暂时保持一致 */
+  /* 品牌色通常不需要大改，但在深色背景下可能需要微调 */
+  /* Element Plus 会自动生成 dark 变体，但如果我们需要手动控制可以在这里覆盖 */
 
   /* 背景色变深 */
   --bg-color-page: #0a0a0a;  /* 极深灰（接近黑） */
   --bg-color-card: #141414;  /* 卡片背景（深灰） */
   --bg-color-overlay: #1d1e1f;
+  --bg-color-hover: rgba(255, 255, 255, 0.05); /* 深色模式下的悬停 */
 
   /* 文字色变浅 */
   --text-color-primary: #E5EAF3;
   --text-color-regular: #A3A6AD;
   --text-color-secondary: #6C6E72;
+  --text-color-placeholder: #4C4D4F;
 
   /* 边框和阴影调整 */
   --border-color: #2C2D2E;
-  --shadow-color: rgba(0, 0, 0, 0.3);
+  --border-color-light: #363637;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+
+  /* --- 特殊场景适配 --- */
+  /* 暗黑模式下，渐变需要压暗，或者干脆去掉 */
+  --bg-gradient-login: linear-gradient(135deg, #050505 0%, #1a1a1a 100%);
+  --bg-gradient-welcome: linear-gradient(120deg, var(--bg-color-card) 60%, #2c1d0b 100%); /* 微调一点橙色调的黑 */
 }
 
 /* --- 4. 覆盖 Element Plus 默认样式 (让组件也支持暗黑) --- */
@@ -55,6 +73,13 @@ html.dark {
 
   --el-text-color-primary: var(--text-color-primary);
   --el-text-color-regular: var(--text-color-regular);
+  --el-text-color-secondary: var(--text-color-secondary);
+  --el-text-color-placeholder: var(--text-color-placeholder);
+
   --el-border-color: var(--border-color);
-  --el-border-color-light: var(--border-color);
+  --el-border-color-light: var(--border-color-light);
+  
+  /* 修复 Element Plus 输入框等组件在暗黑模式下的背景 */
+  --el-input-bg-color: var(--bg-color-overlay);
+  --el-fill-color-blank: var(--bg-color-card);
 }

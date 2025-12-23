@@ -22,7 +22,7 @@ const onSubmit = async () => {
     await updateProfile({ ...form, avatar: userStore.avatar })
     await userStore.getInfo()
     ElMessage.success('资料保存成功')
-  } catch (e) {} finally { loading.value = false }
+  } catch (e) { console.error(e) } finally { loading.value = false }
 }
 
 onMounted(initData)

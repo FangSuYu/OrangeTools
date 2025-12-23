@@ -87,5 +87,5 @@ const onSubmit = () => {
 /* 同样复制 InfoTab 里的 style */
 .form-container { padding: 20px 0; max-width: 600px; }
 .action-bar { margin-top: 40px; text-align: right; .save-btn { padding: 12px 40px; font-weight: bold; background: linear-gradient(90deg, #ff9a9e, #fad0c4); border: none; color: #fff; &:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 154, 158, 0.4); } } }
-:deep(.el-input__wrapper) { background-color: var(--el-fill-color-lighter); box-shadow: none !important; border: 1px solid transparent; &:hover, &.is-focus { background-color: var(--bg-color-card); border-color: #ff9a9e; box-shadow: 0 0 0 3px rgba(255, 154, 158, 0.2) !important; } }
+:deep(.el-input__wrapper) { background-color: var(--el-fill-color-lighter); box-shadow: none !important; border: 1px solid transparent; &:hover, &.is-focus { background-color: var(--bg-color-card); border-color: var(--el-color-primary); box-shadow: 0 0 0 3px var(--el-color-primary-light-9) !important; } }
 </style>

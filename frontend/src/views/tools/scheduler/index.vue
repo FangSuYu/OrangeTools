@@ -226,7 +226,7 @@ import html2canvas from 'html2canvas'
 import CountUp from 'vue-countup-v3'
 import { getToolStats, reportToolUsage } from '@/api/community'
 import { autoSchedule } from '@/api/tools/scheduler'
-import { Calendar, UploadFilled, Delete, Download, Search, Rank, Plus, Warning, Document, Check, Camera, DataAnalysis, Close, FolderOpened, FolderChecked, Cpu } from '@element-plus/icons-vue'
+import { UploadFilled, Delete, Rank, Plus, Warning, Document, Check, Camera, DataAnalysis, FolderOpened, FolderChecked, Cpu } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import SmartSettings from './components/SmartSettings.vue'
 import ResultReport from './components/ResultReport.vue'
@@ -330,6 +330,7 @@ const handleImportJSON = (event) => {
           event.target.value = ''
         })
     } catch (err) {
+      console.error(err)
       ElMessage.error('文件解析失败')
     }
     // 清空 input
@@ -635,9 +636,9 @@ const handleRetry = () => {
 </script>
 
 <style scoped lang="scss">
-$primary-color: #ff9c00;
-$bg-color: #f5f7fa;
-$border-color: #e4e7ed;
+$primary-color: var(--el-color-primary);
+$bg-color: var(--bg-color-page);
+$border-color: var(--border-color);
 
 /* 引入淡入淡出动画 (适配 transition name="el-zoom-in-center") */
 .app-container {
@@ -695,11 +696,8 @@ $border-color: #e4e7ed;
       }
     }
 
-    /* 暗黑模式微调 */
-    :deep(html.dark) & .stats-badge {
-      background: #262727;
-      border-color: #4c4d4f;
-    }
+    /* 暗黑模式微调 - 已通过变量自适应，移除手动 override */
+    /* :deep(html.dark) & .stats-badge { ... } */
 
     .tutorial-link {
       font-size: 14px;
@@ -796,7 +794,7 @@ $border-color: #e4e7ed;
 
   .workspace-toolbar {
     height: 60px;
-    background: #fff;
+    background: var(--bg-color-card); /* Use variable */
     border-bottom: 1px solid $border-color;
     display: flex;
     justify-content: space-between;
@@ -814,7 +812,7 @@ $border-color: #e4e7ed;
         align-items: center;
         gap: 8px;
         font-size: 14px;
-        color: #606266;
+        color: var(--text-color-regular); /* Use variable */
       }
     }
 
@@ -831,18 +829,18 @@ $border-color: #e4e7ed;
 
     .sidebar {
       width: 320px;
-      background: #fff;
+      background: var(--bg-color-card); /* Use variable */
       border-right: 1px solid $border-color;
       display: flex;
       flex-direction: column;
 
       .sidebar-header {
         padding: 15px;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 1px solid var(--border-color-light); /* Use variable */
 
         h3 {
           margin-bottom: 15px;
-          color: #303133;
+          color: var(--text-color-primary); /* Use variable */
         }
 
         .filter-group {
@@ -866,15 +864,15 @@ $border-color: #e4e7ed;
         flex: 1;
         overflow-y: auto;
         padding: 10px;
-        background: #f9f9f9;
+        background: var(--bg-color-page); /* Use variable */
         overscroll-behavior: contain;
         /* 阻止滚动事件冒泡到父容器 */
 
         .student-card {
-          background: #fff;
+          background: var(--bg-color-card); /* Use variable */
           padding: 12px;
           border-radius: 6px;
-          border: 1px solid #ebeef5;
+          border: 1px solid var(--border-color); /* Use variable */
           display: flex;
           align-items: center;
           margin-bottom: 8px;
@@ -889,8 +887,8 @@ $border-color: #e4e7ed;
           .card-avatar {
             width: 36px;
             height: 36px;
-            background: #f2f6fc;
-            color: #909399;
+            background: var(--bg-color-hover); /* Use variable */
+            color: var(--text-color-secondary); /* Use variable */
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -904,18 +902,18 @@ $border-color: #e4e7ed;
 
             .name {
               font-weight: 600;
-              color: #303133;
+              color: var(--text-color-primary); /* Use variable */
             }
 
             .meta {
               font-size: 12px;
-              color: #909399;
+              color: var(--text-color-secondary); /* Use variable */
               margin-top: 2px;
             }
           }
 
           .drag-icon {
-            color: #c0c4cc;
+            color: var(--text-color-placeholder); /* Use variable */
           }
         }
       }
@@ -943,7 +941,7 @@ $border-color: #e4e7ed;
         margin-bottom: 5px;
         position: sticky; // 添加这行
         top: 0; // 添加这行
-        // background: #fff; // 添加这行，防止内容透出
+        background: var(--bg-color-page); // 确保吸顶时不透色
         z-index: 10; // 添加这行，保证在内容之上
         padding-top: 20px; // 可选：与整体padding一致
         padding-bottom: 15px; // 可选：增加一些底部间隙
@@ -955,12 +953,12 @@ $border-color: #e4e7ed;
         .day-col {
           flex: 1;
           text-align: center;
-          background: #eef1f6;
+          background: var(--el-fill-color-light); /* Use variable */
           padding: 10px;
           margin: 0 2px;
           border-radius: 4px;
           font-weight: bold;
-          color: #606266;
+          color: var(--text-color-regular); /* Use variable */
         }
       }
 
@@ -975,7 +973,7 @@ $border-color: #e4e7ed;
             /* 特殊时段和下一节课之间多留点缝隙，增加区分度 */
 
             .idx-cell {
-              background-color: #f2f6fc;
+              background-color: var(--el-fill-color-light); /* Use variable */
               /* 稍微深一点的背景 */
               color: $primary-color;
               /* 橙色字体 */
@@ -989,12 +987,10 @@ $border-color: #e4e7ed;
             }
 
             .task-cell {
-              background-color: #fafafa;
+              background-color: var(--bg-color-page); /* Use variable */
               /* 格子背景稍微灰一点，表示非正课时间 */
               border-style: dashed;
               /* 边框用虚线，表示特殊性质 */
-              background: #fff;
-              /* 确保普通行背景 */
             }
           }
 
@@ -1004,14 +1000,14 @@ $border-color: #e4e7ed;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            color: #909399;
+            color: var(--text-color-secondary); /* Use variable */
           }
 
           .task-cell {
             flex: 1;
-            background: #fff;
+            background: var(--bg-color-card); /* Use variable */
             margin: 0 2px;
-            border: 1px solid #ebeef5;
+            border: 1px solid var(--border-color); /* Use variable */
             border-radius: 4px;
             min-height: 100px;
             padding: 4px;
@@ -1023,7 +1019,7 @@ $border-color: #e4e7ed;
 
             &:hover {
               border-color: $primary-color;
-              background-color: #fffcf0;
+              background-color: var(--bg-color-hover); /* Use variable */
 
               .cell-action-overlay {
                 opacity: 1;
@@ -1032,13 +1028,13 @@ $border-color: #e4e7ed;
             }
 
             &.hint-free {
-              background-color: #f0f9eb !important;
-              border-color: #67c23a !important;
+              background-color: var(--el-color-success-light-9) !important;
+              border-color: var(--el-color-success) !important;
             }
 
             &.hint-busy {
-              background-color: #fef0f0 !important;
-              border-color: #f56c6c !important;
+              background-color: var(--el-color-danger-light-9) !important;
+              border-color: var(--el-color-danger) !important;
             }
 
             .cell-draggable {
@@ -1089,7 +1085,7 @@ $border-color: #e4e7ed;
 .ghost-card {
   opacity: 0.5;
   border: 1px dashed $primary-color !important;
-  background: #ecf5ff !important;
+  background: var(--el-color-primary-light-9) !important;
 }
 
 .ghost-tag {
@@ -1101,7 +1097,7 @@ $border-color: #e4e7ed;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color); /* Use variable */
   padding-bottom: 10px;
 
   .highlight {
@@ -1118,16 +1114,16 @@ $border-color: #e4e7ed;
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    border-bottom: 1px solid #f5f7fa;
+    border-bottom: 1px solid var(--border-color-light); /* Use variable */
     cursor: pointer;
     border-radius: 4px;
 
     &:hover {
-      background: #f0f2f5;
+      background: var(--bg-color-hover); /* Use variable */
     }
 
     &.is-conflict {
-      background: #fef0f0;
+      background: var(--el-color-danger-light-9);
     }
 
     &.is-added {
@@ -1143,7 +1139,7 @@ $border-color: #e4e7ed;
       .avatar {
         width: 32px;
         height: 32px;
-        background: #eee;
+        background: var(--bg-color-hover); /* Use variable */
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -1162,7 +1158,7 @@ $border-color: #e4e7ed;
           font-weight: 600;
           font-size: 15px;
           /* 微调：稍微加大名字字号 */
-          color: #303133;
+          color: var(--text-color-primary); /* Use variable */
         }
 
         /* 【新增】元数据样式 */
@@ -1172,7 +1168,7 @@ $border-color: #e4e7ed;
           align-items: center;
           /* 垂直居中 */
           font-size: 12px;
-          color: #909399;
+          color: var(--text-color-secondary); /* Use variable */
           margin: 4px 0;
 
           /* 注意：删掉父级原来的 white-space, overflow, text-overflow */
@@ -1180,7 +1176,7 @@ $border-color: #e4e7ed;
 
           .divider {
             margin: 0 4px;
-            color: #e0e0e0;
+            color: var(--border-color); /* Use variable */
             flex-shrink: 0;
             /* 分割线永远不许缩小 */
           }
@@ -1232,8 +1228,8 @@ $border-color: #e4e7ed;
 <style>
 .dragging-card-fallback {
   /* 强制设置背景色和边框，防止变成透明 */
-  background: #fff !important;
-  border: 1px solid #ff9c00 !important;
+  background: var(--bg-color-card) !important; /* Use variable */
+  border: 1px solid var(--el-color-primary) !important;
   /* 拖拽时给个橙色边框提示 */
   border-radius: 6px;
   padding: 12px;
@@ -1255,8 +1251,8 @@ $border-color: #e4e7ed;
 .dragging-card-fallback .card-avatar {
   width: 36px;
   height: 36px;
-  background: #f2f6fc;
-  color: #909399;
+  background: var(--bg-color-hover); /* Use variable */
+  color: var(--text-color-secondary); /* Use variable */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1271,17 +1267,17 @@ $border-color: #e4e7ed;
 
 .dragging-card-fallback .name {
   font-weight: 600;
-  color: #303133;
+  color: var(--text-color-primary); /* Use variable */
 }
 
 .dragging-card-fallback .meta {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-color-secondary); /* Use variable */
   margin-top: 2px;
 }
 
 .dragging-card-fallback .drag-icon {
-  color: #ff9c00;
+  color: var(--el-color-primary);
   /* 拖拽时图标变色 */
 }
 </style>

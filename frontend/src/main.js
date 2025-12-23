@@ -4,6 +4,8 @@ import pinia from '@/stores'
 // 1. 先引入 Element Plus 及其样式
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+// 【核心修复】引入 Element Plus 暗黑模式变量
+import 'element-plus/theme-chalk/dark/css-vars.css'
 
 // 2. 引入我们的全局样式
 // 这一行非常重要！它包含了 reset.scss 和 theme.scss (定义了所有变量)

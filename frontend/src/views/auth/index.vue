@@ -379,7 +379,7 @@ const showNotDevelopedMessage = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, var(--bg-color-page) 0%, var(--el-color-primary-light-9) 100%);
+  background: var(--bg-gradient-login);
   padding: 20px;
   position: relative;
 }
