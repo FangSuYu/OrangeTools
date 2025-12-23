@@ -52,7 +52,7 @@ const onSubmit = () => {
         router.push('/login')
 
       } catch (e) {
-        // error handled by request.js
+        // 错误已在 request.js 中处理
       } finally {
         loading.value = false
       }

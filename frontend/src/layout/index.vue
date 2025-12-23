@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { AppMain, Navbar, Sidebar } from './components'
 import { useAppStore } from '@/stores/modules/app'
 
@@ -11,10 +11,34 @@ const classObj = computed(() => ({
   openSidebar: appStore.sidebar.opened,
   withoutAnimation: appStore.sidebar.withoutAnimation
 }))
+
+const handleClickOutside = () => {
+  appStore.closeSidebar(false)
+}
+
+// 响应式处理：移动端自动收起侧边栏
+const WIDTH = 768
+const checkMobile = () => {
+  const rect = document.body.getBoundingClientRect()
+  const isMobile = rect.width - 1 < WIDTH
+  if (isMobile && appStore.sidebar.opened) {
+    appStore.closeSidebar(true)
+  }
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <template>
   <div :class="classObj" class="app-wrapper">
+    <div v-if="appStore.sidebar.opened" class="drawer-bg" @click="handleClickOutside" />
     <Sidebar class="sidebar-container" />
 
     <div class="main-container">
@@ -32,6 +56,17 @@ const classObj = computed(() => ({
   height: 100%;
   width: 100%;
   display: flex;
+}
+
+.drawer-bg {
+  background: #000;
+  opacity: 0.3;
+  width: 100%;
+  top: 0;
+  height: 100%;
+  position: absolute;
+  z-index: 999;
+  display: none;
 }
 
 /* =========================================
@@ -77,5 +112,52 @@ const classObj = computed(() => ({
   z-index: 9;
   width: calc(100% - var(--sidebar-width));
   transition: width 0.28s;
+}
+
+/* =========================================
+   【移动端适配】
+   ========================================= */
+@media (max-width: 768px) {
+  /* 移动端侧边栏展开时显示遮罩 */
+  .openSidebar .drawer-bg {
+    display: block;
+  }
+
+  /* 移动端收起侧边栏：宽度为0 (隐藏) */
+  .hideSidebar {
+    --sidebar-width: 0px !important;
+    .sidebar-container {
+      width: 0;
+      transform: translateX(-100%); /* 确保彻底移出 */
+    }
+  }
+
+  /* 移动端侧边栏展开：悬浮在内容之上 */
+  .sidebar-container {
+    transition: transform 0.28s, width 0.28s;
+    width: 220px !important; /* 强制固定宽度 */
+  }
+
+  /* 移动端展开时，侧边栏正常显示，不做位移 (默认就是0) */
+  .openSidebar .sidebar-container {
+    transform: translateX(0);
+  }
+  
+  /* 移动端收起时，侧边栏移出屏幕 */
+  .hideSidebar .sidebar-container {
+    transform: translateX(-100%);
+    width: 0 !important;
+  }
+
+  /* 移动端主内容区：始终占满全屏，不留左边距 */
+  .main-container {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* 移动端顶部导航：始终占满全屏 */
+  .fixed-header {
+    width: 100% !important;
+  }
 }
 </style>

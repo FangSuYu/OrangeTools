@@ -46,21 +46,20 @@ import { Platform, Coffee, Sunny } from '@element-plus/icons-vue'
   width: 100%;
   position: relative;
   overflow: hidden;
-  padding-top: var(--header-height);
-  /* 给固定的顶栏让出位置 */
-  padding: calc(var(--header-height) + 20px) 20px 20px 20px;
+
   /* 2. 【核心】使用 Flex 布局，方向为垂直列 */
   display: flex;
   flex-direction: column;
-  /* 3. 处理顶部导航栏的避让 (padding-top) */
-  padding-top: var(--header-height);
-  /* 4. 设置整体的左右和底部内边距 */
-  /* 注意：这里我去掉了 bottom 的 padding，以免页脚下方留白过多 */
-  padding-left: 20px;
-  padding-right: 20px;
-  padding-bottom: 0;
+
+  /* 3. 设置内边距：顶部避让Header + 20px间距，左右20px */
+  padding: calc(var(--header-height) + 20px) 20px 0 20px;
 
   background-color: var(--bg-color-page);
+
+  /* 移动端适配：减少左右内边距 */
+  @media (max-width: 768px) {
+    padding: calc(var(--header-height) + 20px) 10px 0 10px;
+  }
 }
 
 /* 【新增】内容包裹层样式 */

@@ -402,8 +402,9 @@ const showNotDevelopedMessage = () => {
 }
 
 .login-box {
-  width: 1000px;
-  // height: 600px; // remove fixed height to adapt content
+  width: 100%;
+  max-width: 1000px;
+  // min-height: 600px; // 移除固定高度以适应内容
   min-height: 600px;
   background-color: var(--bg-color-card);
   border-radius: 16px;
@@ -412,16 +413,16 @@ const showNotDevelopedMessage = () => {
   overflow: hidden;
 
   @media (max-width: 768px) {
-    width: 100%;
     flex-direction: column;
+    min-height: auto; /* 移动端高度自适应 */
 
     .login-left {
       display: none;
     }
 
     .login-right {
-      width: 100%;
-      padding: 40px 20px;
+      width: 100% !important; /* 强制覆盖 flex 布局下的宽度 */
+      padding: 30px 20px;
     }
   }
 }
@@ -462,7 +463,7 @@ const showNotDevelopedMessage = () => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 40px 60px; // Increased padding
+  padding: 40px 60px; // 增加内边距
   background-color: var(--bg-color-card);
 
   .form-header {
