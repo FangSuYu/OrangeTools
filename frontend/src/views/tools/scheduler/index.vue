@@ -1,224 +1,228 @@
 <template>
-  <div class="app-container">
+  <div class="mobile-adapter-container" ref="adapterContainer">
+    <div class="mobile-adapter-content" :style="contentStyle">
+      <div class="app-container">
 
-    <div v-if="!hasData" class="tool-upload-page">
-      <div class="tool-header">
-        <div class="header-content">
-          <h1>📅 智能排班助手</h1>
-          <p class="desc">
-            批量上传 Excel 课表，一键生成智能排班方案，支持手动调整。
-            <el-link type="primary" class="tutorial-link" @click="openTutorial">
-              <el-icon>
-                <Document />
-              </el-icon> 查看使用教程
-            </el-link>
-          </p>
-          <div class="stats-badge">🔥 已累计服务 <span><count-up :end-val="usageCount" :duration="2.5" /></span> 人次</div>
-        </div>
-      </div>
-
-      <transition name="el-zoom-in-center">
-        <div v-if="!hasData" class="upload-section card-box">
-          <el-upload ref="uploadRef" v-model:file-list="fileList" class="upload-demo" drag multiple :auto-upload="false"
-            accept=".xlsx, .xls">
-            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-            <div class="el-upload__text">将 Excel 课表拖到此处，或 <em>点击上传</em></div>
-            <template #tip>
-              <div class="el-upload__tip">支持批量上传，自动识别全学期课程</div>
-            </template>
-          </el-upload>
-
-          <div class="actions">
-            <el-button type="primary" size="large" :loading="loading" @click="startAnalysis" round>
-              <el-icon>
-                <DataAnalysis />
-              </el-icon>
-              <span>开始智能排班</span>
-            </el-button>
-          </div>
-        </div>
-      </transition>
-    </div>
-
-    <div v-else class="workspace-wrapper">
-
-      <div class="workspace-toolbar">
-        <div class="left-section">
-          <div class="week-selector">
-            <span class="label">当前周次:</span>
-            <el-input-number v-model="currentWeek" :min="1" :max="25" size="default" />
-          </div>
-        </div>
-
-        <div class="right-section">
-          <el-button type="primary" color="#626aef" :icon="Cpu" @click="handleOpenSmartSettings"
-            style="margin-right: 15px; font-weight: bold;">
-            智能排班
-          </el-button>
-          <input type="file" ref="importInputRef" style="display: none" accept=".json" @change="handleImportJSON" />
-
-          <el-button-group>
-            <el-tooltip content="导入之前的排班数据(.json)" placement="bottom">
-              <el-button type="warning" plain :icon="FolderOpened" @click="triggerImport">导入</el-button>
-            </el-tooltip>
-            <el-tooltip content="保存当前进度为文件(.json)" placement="bottom">
-              <el-button type="success" plain :icon="FolderChecked" @click="handleExportJSON">存档</el-button>
-            </el-tooltip>
-          </el-button-group>
-
-          <el-divider direction="vertical" class="custom-divider" />
-
-          <el-button type="danger" plain :icon="Delete" @click="handleClear">重置</el-button>
-
-          <el-tooltip content="截图分享" placement="bottom">
-            <el-button type="primary" plain :icon="Camera" @click="handleScreenshot" :loading="screenshotLoading"
-              style="margin-right: 20px;">
-            </el-button>
-          </el-tooltip>
-        </div>
-      </div>
-
-      <div class="workspace-body">
-
-        <aside class="sidebar">
-          <div class="sidebar-header">
-            <h3>待选人员 ({{ filteredStudents.length }})</h3>
-
-            <div class="filter-group">
-              <el-input v-model="searchQuery" placeholder="搜索姓名..." prefix-icon="Search" clearable
-                class="filter-item" />
-              <el-select v-model="filterCollege" placeholder="选择学院" clearable class="filter-item">
-                <el-option v-for="c in collegeOptions" :key="c" :label="c" :value="c" />
-              </el-select>
-              <div class="filter-row">
-                <el-select v-model="filterGrade" placeholder="年级" clearable class="filter-half">
-                  <el-option v-for="g in gradeOptions" :key="g" :label="g" :value="g" />
-                </el-select>
-                <el-select v-model="filterMajor" placeholder="专业" clearable class="filter-half">
-                  <el-option v-for="m in majorOptions" :key="m" :label="m" :value="m" />
-                </el-select>
-              </div>
+        <div v-if="!hasData" class="tool-upload-page">
+          <div class="tool-header">
+            <div class="header-content">
+              <h1>📅 智能排班助手</h1>
+              <p class="desc">
+                批量上传 Excel 课表，一键生成智能排班方案，支持手动调整。
+                <el-link type="primary" class="tutorial-link" @click="openTutorial">
+                  <el-icon>
+                    <Document />
+                  </el-icon> 查看使用教程
+                </el-link>
+              </p>
+              <div class="stats-badge">🔥 已累计服务 <span><count-up :end-val="usageCount" :duration="2.5" /></span> 人次</div>
             </div>
           </div>
 
-          <div class="sidebar-content">
-            <VueDraggable v-model="filteredStudents" :group="{ name: 'people', pull: 'clone', put: false }"
-              :sort="false" item-key="id" ghost-class="ghost-card" class="student-list" :force-fallback="true"
-              :fallback-on-body="true" :scroll-sensitivity="150" :scroll-speed="20" drag-class="dragging-card-fallback"
-              :bubble-scroll="false" @start="onDragStart" @end="onDragEnd">
-              <template #item="{ element }">
-                <div class="student-card">
-                  <div class="card-avatar">{{ element.name.charAt(0) }}</div>
-                  <div class="card-info">
-                    <div class="name">{{ element.name }}</div>
-                    <div class="meta">{{ element.major }}</div>
-                  </div>
-                  <el-icon class="drag-icon">
-                    <Rank />
+          <transition name="el-zoom-in-center">
+            <div v-if="!hasData" class="upload-section card-box">
+              <el-upload ref="uploadRef" v-model:file-list="fileList" class="upload-demo" drag multiple
+                :auto-upload="false" accept=".xlsx, .xls">
+                <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                <div class="el-upload__text">将 Excel 课表拖到此处，或 <em>点击上传</em></div>
+                <template #tip>
+                  <div class="el-upload__tip">支持批量上传，自动识别全学期课程</div>
+                </template>
+              </el-upload>
+
+              <div class="actions">
+                <el-button type="primary" size="large" :loading="loading" @click="startAnalysis" round>
+                  <el-icon>
+                    <DataAnalysis />
                   </el-icon>
-                </div>
-              </template>
-            </VueDraggable>
-          </div>
-        </aside>
+                  <span>开始智能排班</span>
+                </el-button>
+              </div>
+            </div>
+          </transition>
+        </div>
 
-        <main class="schedule-grid" ref="scheduleGridRef">
-          <div class="grid-header">
-            <div class="idx-col">节次</div>
-            <div v-for="day in ['周一', '周二', '周三', '周四', '周五', '周六', '周日']" :key="day" class="day-col">
-              {{ day }}
+        <div v-else class="workspace-wrapper">
+
+          <div class="workspace-toolbar">
+            <div class="left-section">
+              <div class="week-selector">
+                <span class="label">当前周次:</span>
+                <el-input-number v-model="currentWeek" :min="1" :max="25" size="default" />
+              </div>
+            </div>
+
+            <div class="right-section">
+              <el-button type="primary" color="#626aef" :icon="Cpu" @click="handleOpenSmartSettings"
+                style="margin-right: 15px; font-weight: bold;">
+                智能排班
+              </el-button>
+              <input type="file" ref="importInputRef" style="display: none" accept=".json" @change="handleImportJSON" />
+
+              <el-button-group>
+                <el-tooltip content="导入之前的排班数据(.json)" placement="bottom">
+                  <el-button type="warning" plain :icon="FolderOpened" @click="triggerImport">导入</el-button>
+                </el-tooltip>
+                <el-tooltip content="保存当前进度为文件(.json)" placement="bottom">
+                  <el-button type="success" plain :icon="FolderChecked" @click="handleExportJSON">存档</el-button>
+                </el-tooltip>
+              </el-button-group>
+
+              <el-divider direction="vertical" class="custom-divider" />
+
+              <el-button type="danger" plain :icon="Delete" @click="handleClear">重置</el-button>
+
+              <el-tooltip content="截图分享" placement="bottom">
+                <el-button type="primary" plain :icon="Camera" @click="handleScreenshot" :loading="screenshotLoading"
+                  style="margin-right: 20px;">
+                </el-button>
+              </el-tooltip>
             </div>
           </div>
 
-          <div class="grid-rows">
-            <div v-for="row in timeLayout" :key="row.id" class="grid-row"
-              :class="{ 'special-row': row.type === 'special' }">
-              <div class="idx-cell">
-                <span v-if="row.type === 'special'" class="special-label">{{ row.alias }}</span>
-                <span v-else>{{ row.label }}</span>
+          <div class="workspace-body">
+
+            <aside class="sidebar">
+              <div class="sidebar-header">
+                <h3>待选人员 ({{ filteredStudents.length }})</h3>
+
+                <div class="filter-group">
+                  <el-input v-model="searchQuery" placeholder="搜索姓名..." prefix-icon="Search" clearable
+                    class="filter-item" />
+                  <el-select v-model="filterCollege" placeholder="选择学院" clearable class="filter-item">
+                    <el-option v-for="c in collegeOptions" :key="c" :label="c" :value="c" />
+                  </el-select>
+                  <div class="filter-row">
+                    <el-select v-model="filterGrade" placeholder="年级" clearable class="filter-half">
+                      <el-option v-for="g in gradeOptions" :key="g" :label="g" :value="g" />
+                    </el-select>
+                    <el-select v-model="filterMajor" placeholder="专业" clearable class="filter-half">
+                      <el-option v-for="m in majorOptions" :key="m" :label="m" :value="m" />
+                    </el-select>
+                  </div>
+                </div>
               </div>
 
-              <div v-for="day in 7" :key="day" class="task-cell" :class="getCellHintClass(day, row.id)"
-                @click.self="openSelectDialog(day, row.id)">
-                <VueDraggable :list="getSlotList(day, row.id)" group="people" item-key="id" class="cell-draggable"
-                  ghost-class="ghost-tag" @change="(evt) => onSlotChange(evt, day, row.id)" :force-fallback="true"
-                  :fallback-on-body="true" :scroll-sensitivity="150" :scroll-speed="20" :bubble-scroll="false">
+              <div class="sidebar-content">
+                <VueDraggable v-model="filteredStudents" :group="{ name: 'people', pull: 'clone', put: false }"
+                  :sort="false" item-key="id" ghost-class="ghost-card" class="student-list" :force-fallback="true"
+                  :fallback-on-body="true" :scroll-sensitivity="150" :scroll-speed="20"
+                  drag-class="dragging-card-fallback" :bubble-scroll="false" @start="onDragStart" @end="onDragEnd">
                   <template #item="{ element }">
-                    <el-tooltip :content="getConflictInfo(element, day, row.id).tooltip" placement="top"
-                      :disabled="!getConflictInfo(element, day, row.id).isConflict" :teleported="false">
-                      <el-tag :type="getConflictInfo(element, day, row.id).type" closable class="student-tag"
-                        @close="removeStudent(day, row.id, element.id)" @click.stop>
-                        {{ element.name }}
-                        <el-icon v-if="getConflictInfo(element, day, row.id).isConflict" class="warn-icon">
-                          <Warning />
-                        </el-icon>
-                      </el-tag>
-                    </el-tooltip>
+                    <div class="student-card">
+                      <div class="card-avatar">{{ element.name.charAt(0) }}</div>
+                      <div class="card-info">
+                        <div class="name">{{ element.name }}</div>
+                        <div class="meta">{{ element.major }}</div>
+                      </div>
+                      <el-icon class="drag-icon">
+                        <Rank />
+                      </el-icon>
+                    </div>
                   </template>
                 </VueDraggable>
+              </div>
+            </aside>
 
-                <div class="cell-action-overlay">
-                  <el-button :icon="Plus" circle size="small" class="add-btn"
-                    @click.stop="openSelectDialog(day, row.id)" />
+            <main class="schedule-grid" ref="scheduleGridRef">
+              <div class="grid-header">
+                <div class="idx-col">节次</div>
+                <div v-for="day in ['周一', '周二', '周三', '周四', '周五', '周六', '周日']" :key="day" class="day-col">
+                  {{ day }}
                 </div>
               </div>
-            </div>
+
+              <div class="grid-rows">
+                <div v-for="row in timeLayout" :key="row.id" class="grid-row"
+                  :class="{ 'special-row': row.type === 'special' }">
+                  <div class="idx-cell">
+                    <span v-if="row.type === 'special'" class="special-label">{{ row.alias }}</span>
+                    <span v-else>{{ row.label }}</span>
+                  </div>
+
+                  <div v-for="day in 7" :key="day" class="task-cell" :class="getCellHintClass(day, row.id)"
+                    @click.self="openSelectDialog(day, row.id)">
+                    <VueDraggable :list="getSlotList(day, row.id)" group="people" item-key="id" class="cell-draggable"
+                      ghost-class="ghost-tag" @change="(evt) => onSlotChange(evt, day, row.id)" :force-fallback="true"
+                      :fallback-on-body="true" :scroll-sensitivity="150" :scroll-speed="20" :bubble-scroll="false">
+                      <template #item="{ element }">
+                        <el-tooltip :content="getConflictInfo(element, day, row.id).tooltip" placement="top"
+                          :disabled="!getConflictInfo(element, day, row.id).isConflict" :teleported="false">
+                          <el-tag :type="getConflictInfo(element, day, row.id).type" closable class="student-tag"
+                            @close="removeStudent(day, row.id, element.id)" @click.stop>
+                            {{ element.name }}
+                            <el-icon v-if="getConflictInfo(element, day, row.id).isConflict" class="warn-icon">
+                              <Warning />
+                            </el-icon>
+                          </el-tag>
+                        </el-tooltip>
+                      </template>
+                    </VueDraggable>
+
+                    <div class="cell-action-overlay">
+                      <el-button :icon="Plus" circle size="small" class="add-btn"
+                        @click.stop="openSelectDialog(day, row.id)" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </main>
           </div>
-        </main>
-      </div>
-    </div>
-
-    <el-dialog v-model="dialogVisible" title="添加人员" width="550px" append-to-body top="5vh">
-      <div class="dialog-header-custom">
-        <span class="info">
-          正在安排: <span class="highlight">周{{ currentSelectDay }} {{ getSectionName(currentSelectSection) }}</span>
-        </span>
-        <el-input v-model="dialogSearch" placeholder="搜索姓名..." style="width: 200px;" size="small"
-          prefix-icon="Search" />
-      </div>
-      <div class="dialog-list">
-        <div v-for="student in dialogStudentList" :key="student.id" class="dialog-item"
-          :class="{ 'is-conflict': student.conflictInfo.isConflict, 'is-added': student.isAdded }"
-          @click="!student.isAdded && selectStudentFromDialog(student)">
-          <div class="item-left">
-            <div class="avatar">{{ student.name.charAt(0) }}</div>
-            <div class="text">
-              <div class="name">{{ student.name }}</div>
-
-              <div class="meta-info">
-                <span class="meta-item grade">{{ student.grade }}级</span>
-                <span class="divider">|</span>
-                <span class="meta-item college" :title="student.college">{{ student.college }}</span>
-                <span class="divider">|</span>
-                <span class="meta-item major" :title="student.major">{{ student.major }}</span>
-              </div>
-
-              <div class="desc" v-if="student.isAdded">
-                <el-tag size="small" type="info" effect="plain">已添加</el-tag>
-              </div>
-              <div class="desc" v-else-if="student.conflictInfo.isConflict">
-                <el-tag size="small" type="danger" effect="plain">{{ student.conflictInfo.reason }}</el-tag>
-              </div>
-              <div class="desc" v-else>
-                <el-tag size="small" type="success" effect="plain">空闲</el-tag>
-              </div>
-            </div>
-          </div>
-          <el-button size="small"
-            :type="student.isAdded ? 'info' : (student.conflictInfo.isConflict ? 'default' : 'primary')"
-            :icon="student.isAdded ? Check : Plus" :disabled="student.isAdded" circle />
         </div>
-      </div>
-    </el-dialog>
+
+        <el-dialog v-model="dialogVisible" title="添加人员" width="550px" append-to-body top="5vh">
+          <div class="dialog-header-custom">
+            <span class="info">
+              正在安排: <span class="highlight">周{{ currentSelectDay }} {{ getSectionName(currentSelectSection) }}</span>
+            </span>
+            <el-input v-model="dialogSearch" placeholder="搜索姓名..." style="width: 200px;" size="small"
+              prefix-icon="Search" />
+          </div>
+          <div class="dialog-list">
+            <div v-for="student in dialogStudentList" :key="student.id" class="dialog-item"
+              :class="{ 'is-conflict': student.conflictInfo.isConflict, 'is-added': student.isAdded }"
+              @click="!student.isAdded && selectStudentFromDialog(student)">
+              <div class="item-left">
+                <div class="avatar">{{ student.name.charAt(0) }}</div>
+                <div class="text">
+                  <div class="name">{{ student.name }}</div>
+
+                  <div class="meta-info">
+                    <span class="meta-item grade">{{ student.grade }}级</span>
+                    <span class="divider">|</span>
+                    <span class="meta-item college" :title="student.college">{{ student.college }}</span>
+                    <span class="divider">|</span>
+                    <span class="meta-item major" :title="student.major">{{ student.major }}</span>
+                  </div>
+
+                  <div class="desc" v-if="student.isAdded">
+                    <el-tag size="small" type="info" effect="plain">已添加</el-tag>
+                  </div>
+                  <div class="desc" v-else-if="student.conflictInfo.isConflict">
+                    <el-tag size="small" type="danger" effect="plain">{{ student.conflictInfo.reason }}</el-tag>
+                  </div>
+                  <div class="desc" v-else>
+                    <el-tag size="small" type="success" effect="plain">空闲</el-tag>
+                  </div>
+                </div>
+              </div>
+              <el-button size="small"
+                :type="student.isAdded ? 'info' : (student.conflictInfo.isConflict ? 'default' : 'primary')"
+                :icon="student.isAdded ? Check : Plus" :disabled="student.isAdded" circle />
+            </div>
+          </div>
+        </el-dialog>
 
     <SmartSettings v-model="showSmartSettings" :student-pool="studentPool" @confirm="handleAutoSchedule" />
     <ResultReport v-model="showResultReport" :result-data="analysisResult" @apply="applySchedule"
       @retry="handleRetry" />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSchedulerStore } from '@/stores/modules/scheduler'
 import VueDraggable from 'vuedraggable'
@@ -233,6 +237,44 @@ import ResultReport from './components/ResultReport.vue'
 
 const store = useSchedulerStore()
 const { studentPool, scheduleSolution, currentWeek } = storeToRefs(store)
+
+// ================== 移动端缩放适配逻辑 ==================
+const adapterContainer = ref(null)
+const scale = ref(1)
+const isMobile = ref(false)
+
+const contentStyle = computed(() => {
+  if (!isMobile.value) return {}
+  return {
+    width: '1366px', // 强制桌面宽度 (比 Course 的 1200px 更宽，因为排班表内容多)
+    transform: `scale(${scale.value})`,
+    transformOrigin: 'top left',
+    height: `${100 / scale.value}%` // 补偿缩放导致的高度减少
+  }
+})
+
+const updateScale = () => {
+  const width = window.innerWidth
+  const availableWidth = width - 20 // 预留左右 padding
+  if (availableWidth < 1366) {
+    isMobile.value = true
+    scale.value = availableWidth / 1366
+  } else {
+    isMobile.value = false
+    scale.value = 1
+  }
+}
+
+onMounted(() => {
+  updateScale()
+  window.addEventListener('resize', updateScale)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateScale)
+})
+
+// ================== 原有业务逻辑 ==================
 
 const hasData = computed(() => studentPool.value && studentPool.value.length > 0)
 
@@ -639,6 +681,20 @@ const handleRetry = () => {
 $primary-color: var(--el-color-primary);
 $bg-color: var(--bg-color-page);
 $border-color: var(--border-color);
+
+/* 移动端适配容器 */
+.mobile-adapter-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* 禁止出现滚动条 */
+}
+
+/* 内部内容容器 */
+.mobile-adapter-content {
+  width: 100%;
+  height: 100%;
+  /* 默认无缩放 */
+}
 
 /* 引入淡入淡出动画 (适配 transition name="el-zoom-in-center") */
 .app-container {

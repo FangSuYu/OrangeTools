@@ -16,7 +16,7 @@ export function copyText(text) {
           resolve()
         })
         .catch(err => {
-          console.error('Clipboard API Error:', err)
+          console.error('剪贴板 API 错误:', err)
           // 如果现代 API 失败，尝试降级
           fallbackCopy(text, resolve, reject)
         })
@@ -49,12 +49,12 @@ function fallbackCopy(text, resolve, reject) {
     } else {
       // ElMessage.error('复制失败，请手动复制')
       console.log('复制失败，请手动复制')
-      reject(new Error('execCommand failed'))
+      reject(new Error('execCommand 失败'))
     }
   } catch (err) {
     // ElMessage.error('当前环境不支持自动复制')
     console.log('当前环境不支持自动复制')
-    console.error('Fallback Copy Error:', err)
+    console.error('降级复制错误:', err)
     reject(err)
   }
 }

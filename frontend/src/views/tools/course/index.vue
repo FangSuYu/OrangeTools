@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { UploadFilled, DataAnalysis, Delete, Search, Document, CopyDocument, Edit, ZoomIn } from '@element-plus/icons-vue'
-import { ElIcon, ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { UploadFilled, DataAnalysis, Delete, Document, CopyDocument, Edit, ZoomIn } from '@element-plus/icons-vue'
+import { ElIcon, ElMessage } from 'element-plus'
 import { analyzeCourse } from '@/api/tools/course'
 import { useCourseStore } from '@/stores/modules/course'
 import { getToolStats, reportToolUsage } from '@/api/community'
@@ -10,6 +10,45 @@ import { copyText } from '@/utils/clipboard'
 import CourseDetailDialog from './components/CourseDetailDialog.vue'
 
 const courseStore = useCourseStore()
+
+// ================== 移动端缩放适配逻辑 ==================
+const adapterContainer = ref(null)
+const scale = ref(1)
+const isMobile = ref(false)
+
+const contentStyle = computed(() => {
+  if (!isMobile.value) return {}
+  return {
+    width: '1200px', // 强制桌面宽度
+    transform: `scale(${scale.value})`,
+    transformOrigin: 'top left',
+    height: `${100 / scale.value}%` // 补偿缩放导致的高度减少，确保占满容器
+  }
+})
+
+const updateScale = () => {
+  const width = window.innerWidth
+  // AppMain 左右有 padding (移动端 10px * 2 = 20px)
+  // 实际上在这个组件里，我们能拿到的宽度是 container 的宽度
+  // 为了保险，我们直接用 window.innerWidth 减去预估的 padding
+  const availableWidth = width - 20 
+  if (availableWidth < 1200) {
+    isMobile.value = true
+    scale.value = availableWidth / 1200
+  } else {
+    isMobile.value = false
+    scale.value = 1
+  }
+}
+
+onMounted(() => {
+  updateScale()
+  window.addEventListener('resize', updateScale)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateScale)
+})
 
 // ================== 1. 状态定义 ==================
 const loading = ref(false)
@@ -285,9 +324,9 @@ const handleCopyWeek = async () => {
 }
 
 onMounted(async () => {
+  // 原有的获取统计逻辑
   try {
     const res = await getToolStats()
-    // 后端返回的是 List<Tool>，我们需要找到 course_tool 这一项
     const tool = res.find(t => t.code === 'course_tool')
     if (tool) {
       usageCount.value = tool.usageCount
@@ -300,173 +339,191 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="app-container">
-    <div class="tool-header">
-      <div class="header-content">
-        <h1>📅 课表空闲统计助手</h1>
-        <p class="desc">
-          批量上传 Excel 课表，一键分析全员空闲时间。
-          <el-link type="primary" class="tutorial-link" @click="openTutorial">
-            <el-icon>
-              <Document />
-            </el-icon> 查看使用教程
-          </el-link>
-        </p>
-        <div class="stats-badge">🔥 已累计服务 <span><count-up :end-val="usageCount" :duration="2.5" /></span> 人次</div>
-      </div>
-    </div>
-
-    <transition name="el-zoom-in-center">
-      <div v-if="!hasResult" class="upload-section card-box">
-        <el-upload ref="uploadRef" v-model:file-list="fileList" class="upload-demo" drag multiple :auto-upload="false"
-          accept=".xlsx, .xls">
-          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-          <div class="el-upload__text">将 Excel 课表拖到此处，或 <em>点击上传</em></div>
-          <template #tip>
-            <div class="el-upload__tip">支持批量上传，自动识别全学期课程</div>
-          </template>
-        </el-upload>
-        <div class="actions">
-          <el-button type="primary" size="large" :loading="loading" @click="handleAnalyze" round>
-            <el-icon>
-              <DataAnalysis />
-            </el-icon>
-            <span>开始全量分析</span>
-          </el-button>
+  <div class="mobile-adapter-container" ref="adapterContainer">
+    <div class="mobile-adapter-content" :style="contentStyle">
+      <div class="app-container">
+        <div class="tool-header">
+          <div class="header-content">
+            <h1>📅 课表空闲统计助手</h1>
+            <p class="desc">
+              批量上传 Excel 课表，一键分析全员空闲时间。
+              <el-link type="primary" class="tutorial-link" @click="openTutorial">
+                <el-icon>
+                  <Document />
+                </el-icon> 查看使用教程
+              </el-link>
+            </p>
+            <div class="stats-badge">🔥 已累计服务 <span><count-up :end-val="usageCount" :duration="2.5" /></span> 人次</div>
+          </div>
         </div>
-      </div>
-    </transition>
 
-    <transition name="el-fade-in-linear">
-      <div v-if="hasResult" class="result-section">
-        <div class="filter-bar card-box">
-          <div class="left-filters">
-            <div class="week-selector">
-              <span class="label">当前统计:</span>
-              <el-select v-model="currentWeek" style="width: 110px" class="week-select">
-                <el-option v-for="i in weekOptions" :key="i" :label="`第 ${i} 周`" :value="i" />
-              </el-select>
+        <transition name="el-zoom-in-center">
+          <div v-if="!hasResult" class="upload-section card-box">
+            <el-upload ref="uploadRef" v-model:file-list="fileList" class="upload-demo" drag multiple :auto-upload="false"
+              accept=".xlsx, .xls">
+              <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+              <div class="el-upload__text">将 Excel 课表拖到此处，或 <em>点击上传</em></div>
+              <template #tip>
+                <div class="el-upload__tip">支持批量上传，自动识别全学期课程</div>
+              </template>
+            </el-upload>
+            <div class="actions">
+              <el-button type="primary" size="large" :loading="loading" @click="handleAnalyze" round>
+                <el-icon>
+                  <DataAnalysis />
+                </el-icon>
+                <span>开始全量分析</span>
+              </el-button>
+            </div>
+          </div>
+        </transition>
+
+        <transition name="el-fade-in-linear">
+          <div v-if="hasResult" class="result-section">
+            <div class="filter-bar card-box">
+              <div class="left-filters">
+                <div class="week-selector">
+                  <span class="label">当前统计:</span>
+                  <el-select v-model="currentWeek" style="width: 110px" class="week-select">
+                    <el-option v-for="i in weekOptions" :key="i" :label="`第 ${i} 周`" :value="i" />
+                  </el-select>
+                </div>
+
+                <el-divider direction="vertical" />
+
+                <el-select v-model="filters.college" placeholder="全部学院" clearable style="width: 140px">
+                  <el-option v-for="c in rawResult.allColleges" :key="c" :label="c" :value="c" />
+                </el-select>
+                <el-select v-model="filters.major" placeholder="全部专业" clearable style="width: 140px; margin-left: 10px">
+                  <el-option v-for="m in rawResult.allMajors" :key="m" :label="m" :value="m" />
+                </el-select>
+                <el-select v-model="filters.grade" placeholder="全部年级" clearable style="width: 120px; margin-left: 10px">
+                  <el-option v-for="g in rawResult.allGrades" :key="g" :label="g" :value="g" />
+                </el-select>
+                <el-button type="primary" link @click="editInfoVisible = true" style="margin-left: 10px; font-weight:bold">
+                  <el-icon>
+                    <Edit />
+                  </el-icon> 完善班级/学号
+                </el-button>
+              </div>
+
+              <div class="right-actions">
+                <el-button type="success" plain size="small" @click="handleCopyWeek" style="margin-right: 15px">
+                  <el-icon>
+                    <CopyDocument />
+                  </el-icon>
+                  <span>复制周报</span>
+                </el-button>
+
+                <el-radio-group v-model="viewMode" size="small">
+                  <el-radio-button label="list">名单</el-radio-button>
+                  <el-radio-button label="heatmap">热力</el-radio-button>
+                </el-radio-group>
+                <el-button type="danger" plain style="margin-left: 15px" @click="handleReset">
+                  <el-icon>
+                    <Delete />
+                  </el-icon>
+                  <span>重置</span>
+                </el-button>
+              </div>
             </div>
 
-            <el-divider direction="vertical" />
+            <div class="schedule-container card-box">
+              <table class="course-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px">节次</th>
+                    <th v-for="day in ['周一', '周二', '周三', '周四', '周五', '周六', '周日']" :key="day">{{ day }}</th>
+                  </tr>
+                </thead>
 
-            <el-select v-model="filters.college" placeholder="全部学院" clearable style="width: 140px">
-              <el-option v-for="c in rawResult.allColleges" :key="c" :label="c" :value="c" />
-            </el-select>
-            <el-select v-model="filters.major" placeholder="全部专业" clearable style="width: 140px; margin-left: 10px">
-              <el-option v-for="m in rawResult.allMajors" :key="m" :label="m" :value="m" />
-            </el-select>
-            <el-select v-model="filters.grade" placeholder="全部年级" clearable style="width: 120px; margin-left: 10px">
-              <el-option v-for="g in rawResult.allGrades" :key="g" :label="g" :value="g" />
-            </el-select>
-            <el-button type="primary" link @click="editInfoVisible = true" style="margin-left: 10px; font-weight:bold">
-              <el-icon>
-                <Edit />
-              </el-icon> 完善班级/学号
-            </el-button>
-          </div>
+                <transition name="fade" mode="out-in">
+                  <tbody :key="currentWeek">
+                    <tr v-for="slot in 10" :key="slot">
+                      <td class="slot-idx">第 {{ slot }} 节</td>
+                      <td v-for="day in 7" :key="day" class="cell-wrapper"
+                        :style="viewMode === 'heatmap' ? { backgroundColor: getCellColor(filteredSchedule[slot]?.[day]?.busyRatio) } : {}"
+                        @click="handleCopyCell(slot, day)" title="点击复制该节详情">
+                        <template v-if="filteredSchedule[slot] && filteredSchedule[slot][day]">
 
-          <div class="right-actions">
-            <el-button type="success" plain size="small" @click="handleCopyWeek" style="margin-right: 15px">
-              <el-icon>
-                <CopyDocument />
-              </el-icon>
-              <span>复制周报</span>
-            </el-button>
-
-            <el-radio-group v-model="viewMode" size="small">
-              <el-radio-button label="list">名单</el-radio-button>
-              <el-radio-button label="heatmap">热力</el-radio-button>
-            </el-radio-group>
-            <el-button type="danger" plain style="margin-left: 15px" @click="handleReset">
-              <el-icon>
-                <Delete />
-              </el-icon>
-              <span>重置</span>
-            </el-button>
-          </div>
-        </div>
-
-        <div class="schedule-container card-box">
-          <table class="course-table">
-            <thead>
-              <tr>
-                <th style="width: 60px">节次</th>
-                <th v-for="day in ['周一', '周二', '周三', '周四', '周五', '周六', '周日']" :key="day">{{ day }}</th>
-              </tr>
-            </thead>
-
-            <transition name="fade" mode="out-in">
-              <tbody :key="currentWeek">
-                <tr v-for="slot in 10" :key="slot">
-                  <td class="slot-idx">第 {{ slot }} 节</td>
-                  <td v-for="day in 7" :key="day" class="cell-wrapper"
-                    :style="viewMode === 'heatmap' ? { backgroundColor: getCellColor(filteredSchedule[slot]?.[day]?.busyRatio) } : {}"
-                    @click="handleCopyCell(slot, day)" title="点击复制该节详情">
-                    <template v-if="filteredSchedule[slot] && filteredSchedule[slot][day]">
-
-                      <div v-if="viewMode === 'list'" class="mode-list">
-                        <el-tooltip placement="top" :show-after="200" :hide-after="0" transition="none"
-                          :enterable="false">
-                          <template #content>
-                            <div class="tooltip-list">
-                              <div v-for="s in filteredSchedule[slot][day].freeStudents" :key="s.name + s.code">
-                                {{ s.name }} <span style="opacity:0.7">({{ s.major }})</span>
+                          <div v-if="viewMode === 'list'" class="mode-list">
+                            <el-tooltip placement="top" :show-after="200" :hide-after="0" transition="none"
+                              :enterable="false">
+                              <template #content>
+                                <div class="tooltip-list">
+                                  <div v-for="s in filteredSchedule[slot][day].freeStudents" :key="s.name + s.code">
+                                    {{ s.name }} <span style="opacity:0.7">({{ s.major }})</span>
+                                  </div>
+                                  <div v-if="filteredSchedule[slot][day].freeCount === 0">全员有课</div>
+                                </div>
+                              </template>
+                              <div class="cell-content">
+                                <div class="count" :class="{ 'zero': filteredSchedule[slot][day].freeCount === 0 }">
+                                  空闲: {{ filteredSchedule[slot][day].freeCount }}人
+                                </div>
                               </div>
-                              <div v-if="filteredSchedule[slot][day].freeCount === 0">全员有课</div>
-                            </div>
-                          </template>
-                          <div class="cell-content">
-                            <div class="count" :class="{ 'zero': filteredSchedule[slot][day].freeCount === 0 }">
-                              空闲: {{ filteredSchedule[slot][day].freeCount }}人
+                            </el-tooltip>
+                          </div>
+
+                          <div v-else class="mode-heatmap">
+                            <div class="ratio-text"
+                              :style="{ opacity: filteredSchedule[slot][day].busyRatio > 0.5 ? 1 : 0.6 }">
+                              {{ (filteredSchedule[slot][day].busyRatio * 100).toFixed(0) }}% 忙
                             </div>
                           </div>
-                        </el-tooltip>
-                      </div>
+                          <div
+                            v-if="filteredSchedule[slot] && filteredSchedule[slot][day] && (filteredSchedule[slot][day].freeStudents.length + filteredSchedule[slot][day].busyStudents.length > 0)"
+                            class="expand-btn" @click.stop="openDetail(slot, day)" title="查看详细课程与分组">
+                            <el-icon>
+                              <ZoomIn />
+                            </el-icon>
+                          </div>
+                        </template>
+                      </td>
+                    </tr>
+                  </tbody>
+                </transition>
+              </table>
+            </div>
+          </div>
+        </transition>
+        <course-detail-dialog v-model:visible="detailVisible" :slot-data="detailData" :week-info="detailWeekInfo" />
 
-                      <div v-else class="mode-heatmap">
-                        <div class="ratio-text"
-                          :style="{ opacity: filteredSchedule[slot][day].busyRatio > 0.5 ? 1 : 0.6 }">
-                          {{ (filteredSchedule[slot][day].busyRatio * 100).toFixed(0) }}% 忙
-                        </div>
-                      </div>
-                      <div
-                        v-if="filteredSchedule[slot] && filteredSchedule[slot][day] && (filteredSchedule[slot][day].freeStudents.length + filteredSchedule[slot][day].busyStudents.length > 0)"
-                        class="expand-btn" @click.stop="openDetail(slot, day)" title="查看详细课程与分组">
-                        <el-icon>
-                          <ZoomIn />
-                        </el-icon>
-                      </div>
-                    </template>
-                  </td>
-                </tr>
-              </tbody>
-            </transition>
-          </table>
-        </div>
+        <el-dialog v-model="editInfoVisible" title="批量完善学生信息" width="500px" append-to-body>
+          <p style="margin-bottom:10px; color:#666; line-height:1.5">
+            请粘贴名单，每行一位同学。<br />
+            固定格式：<b>姓名 班级 学号</b> （中间用空格或Tab分隔）<br />
+            如果无学号，请用数字0代替。<br />
+            如果重复更新，会替换掉对应姓名的对应信息。
+          </p>
+          <el-input v-model="inputText" type="textarea" :rows="10" placeholder="例如：
+    方苏渝 23级大数据0034班 2350203170
+    肖静宜 24级大数据专本贯通班 2450223033" />
+          <template #footer>
+            <el-button @click="editInfoVisible = false">取消</el-button>
+            <el-button type="primary" @click="handleMatch">开始匹配并更新</el-button>
+          </template>
+        </el-dialog>
       </div>
-    </transition>
-    <course-detail-dialog v-model:visible="detailVisible" :slot-data="detailData" :week-info="detailWeekInfo" />
-
-    <el-dialog v-model="editInfoVisible" title="批量完善学生信息" width="500px" append-to-body>
-      <p style="margin-bottom:10px; color:#666; line-height:1.5">
-        请粘贴名单，每行一位同学。<br />
-        固定格式：<b>姓名 班级 学号</b> （中间用空格或Tab分隔）<br />
-        如果无学号，请用数字0代替。<br />
-        如果重复更新，会替换掉对应姓名的对应信息。
-      </p>
-      <el-input v-model="inputText" type="textarea" :rows="10" placeholder="例如：
-方苏渝 23级大数据0034班 2350203170
-肖静宜 24级大数据专本贯通班 2450223033" />
-      <template #footer>
-        <el-button @click="editInfoVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleMatch">开始匹配并更新</el-button>
-      </template>
-    </el-dialog>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+/* 移动端适配容器 */
+.mobile-adapter-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* 禁止出现滚动条 */
+}
+
+/* 内部内容容器 */
+.mobile-adapter-content {
+  width: 100%;
+  height: 100%;
+  /* 默认无缩放 */
+}
+
 /* 定义淡入淡出动画 (0.5s) */
 .fade-enter-active,
 .fade-leave-active {

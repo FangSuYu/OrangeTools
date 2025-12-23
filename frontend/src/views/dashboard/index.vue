@@ -6,7 +6,7 @@ import CountUp from 'vue-countup-v3'
 import { getToolStats, getPublicFeedbacks } from '@/api/community'
 import {
   DataAnalysis, ChatLineSquare, Medal, User,
-  Sunny, Moon, Coffee, Timer, StarFilled, ArrowRight,
+  Coffee, Timer, ArrowRight,
   Menu,Connection, Refresh
 } from '@element-plus/icons-vue'
 
@@ -397,6 +397,11 @@ onMounted(() => {
 }
 /* 样式与之前完全一致，直接复用即可 */
 .dashboard-container { padding: 20px; max-width: 1400px; margin: 0 auto; }
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 10px;
+  }
+}
 .welcome-card { background: var(--bg-color-card); border-radius: 12px; padding: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; box-shadow: 0 4px 20px var(--shadow-color); margin-bottom: 30px; border: 1px solid var(--border-color); background-image: var(--bg-gradient-welcome);
   .welcome-left { display: flex; align-items: center; gap: 20px; .user-avatar { border: 4px solid var(--bg-color-page); box-shadow: 0 4px 12px rgba(0,0,0,0.1); } .greet { margin: 0 0 10px 0; font-size: 24px; color: var(--text-color-primary); .wave { display: inline-block; animation: wave 2.5s infinite; transform-origin: 70% 70%; } } .quote { margin: 0; color: var(--text-color-secondary); font-size: 14px; display: flex; align-items: center; gap: 6px; .hitokoto-link { color: var(--text-color-secondary); text-decoration: none; transition: color 0.3s; &:hover { color: var(--el-color-primary); } } } }
   .welcome-right { display: flex; gap: 40px; text-align: right; .stat-item { .label { font-size: 13px; color: var(--text-color-secondary); margin-bottom: 5px; } .value { font-size: 28px; font-weight: bold; color: var(--text-color-primary); font-family: 'Helvetica Neue', sans-serif; .unit { font-size: 14px; margin-left: 4px; font-weight: normal; color: var(--text-color-secondary); } } } }

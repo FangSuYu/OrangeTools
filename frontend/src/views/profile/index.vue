@@ -68,6 +68,15 @@ const activeTab = ref('info')
   background: var(--bg-color-page);
 }
 
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 10px;
+  }
+  .settings-panel {
+    padding: 20px 15px !important; /* 覆盖默认 padding */
+  }
+}
+
 /* === 炫酷背景层 === */
 .background-layer {
   position: absolute;

@@ -6,12 +6,12 @@ import { ElMessage } from 'element-plus'
 export const useSchedulerStore = defineStore(
   'scheduler',
   () => {
-    // --- State ---
+    // --- 状态 ---
     const studentPool = ref([])
     const scheduleSolution = ref({})
     const currentWeek = ref(1)
 
-    // --- Actions ---
+    // --- 动作 ---
 
     const uploadAndParse = async (fileList) => {
       if (!fileList || fileList.length === 0) {

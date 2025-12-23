@@ -139,6 +139,10 @@ const isLast = (index) => {
       line-height: 50px;
       margin-left: 8px;
 
+      @media (max-width: 500px) {
+        display: none;
+      }
+
       .no-redirect {
         color: var(--text-color-secondary);
         cursor: text;
