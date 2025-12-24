@@ -213,9 +213,9 @@
           </div>
         </el-dialog>
 
-    <SmartSettings v-model="showSmartSettings" :student-pool="studentPool" @confirm="handleAutoSchedule" />
-    <ResultReport v-model="showResultReport" :result-data="analysisResult" @apply="applySchedule"
-      @retry="handleRetry" />
+        <SmartSettings v-model="showSmartSettings" :student-pool="studentPool" @confirm="handleAutoSchedule" />
+        <ResultReport v-model="showResultReport" :result-data="analysisResult" @apply="applySchedule"
+          @retry="handleRetry" />
       </div>
     </div>
   </div>
@@ -627,7 +627,15 @@ const handleAutoSchedule = async (configPayload) => {
     id: s.id,
     name: s.name,
     // 将课表转换为字符串数组 ["1_1", "1_2"]
-    busySlots: s.scheduleRaw.map(item => `${item.day}_${item.section}`)
+    busySlots: s.scheduleRaw
+      .filter(course => {
+        // 1. 检查 busyWeeks 字段是否存在
+        // 2. 检查当前选择的周次 (currentWeek.value) 是否在 busyWeeks 数组里
+        return course.busyWeeks && course.busyWeeks.includes(currentWeek.value)
+      })
+      .map(item => `${item.day}_${item.section}`)
+    // --- 修改结束 ---
+
   }))
 
   const requestData = {
@@ -666,7 +674,22 @@ const handleAutoSchedule = async (configPayload) => {
 
 // 处理：应用结果 (报告页点击“应用”后触发)
 const applySchedule = (solution) => {
-  store.scheduleSolution = solution // 直接覆盖 Store
+  // 新代码：我们需要“回填”完整的学生信息（包含 scheduleRaw），否则无法计算冲突
+  const hydratedSolution = {}
+
+  // 遍历方案中的每个时间段 (key 类似 "1_1", "2_3")
+  Object.keys(solution).forEach(key => {
+    // 遍历该时间段安排的学生列表
+    hydratedSolution[key] = solution[key].map(simpleStudent => {
+      // 在本地完整库 (studentPool) 中查找该学生，获取包含 scheduleRaw 的完整对象
+      const fullStudent = studentPool.value.find(s => s.id === simpleStudent.id)
+      // 如果找到了就用完整的，没找到就只好用简单的（兜底）
+      return fullStudent || simpleStudent
+    })
+  })
+
+  store.scheduleSolution = hydratedSolution
+  // --- 修改结束 ---
   ElMessage.success('排班方案已应用！')
 }
 
@@ -686,7 +709,8 @@ $border-color: var(--border-color);
 .mobile-adapter-container {
   width: 100%;
   height: 100%;
-  overflow: hidden; /* 禁止出现滚动条 */
+  overflow: hidden;
+  /* 禁止出现滚动条 */
 }
 
 /* 内部内容容器 */
@@ -850,13 +874,20 @@ $border-color: var(--border-color);
 
   .workspace-toolbar {
     height: 60px;
-    background: var(--bg-color-card); /* Use variable */
+    background: var(--bg-color-card);
+    /* Use variable */
     border-bottom: 1px solid $border-color;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
     flex-shrink: 0;
+
+    // 固定功能导航栏样式
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     .left-section {
       display: flex;
@@ -868,7 +899,8 @@ $border-color: var(--border-color);
         align-items: center;
         gap: 8px;
         font-size: 14px;
-        color: var(--text-color-regular); /* Use variable */
+        color: var(--text-color-regular);
+        /* Use variable */
       }
     }
 
@@ -882,21 +914,25 @@ $border-color: var(--border-color);
     flex: 1;
     display: flex;
     overflow: hidden;
+    // padding-top: 60px;
 
     .sidebar {
       width: 320px;
-      background: var(--bg-color-card); /* Use variable */
+      background: var(--bg-color-card);
+      /* Use variable */
       border-right: 1px solid $border-color;
       display: flex;
       flex-direction: column;
 
       .sidebar-header {
         padding: 15px;
-        border-bottom: 1px solid var(--border-color-light); /* Use variable */
+        border-bottom: 1px solid var(--border-color-light);
+        /* Use variable */
 
         h3 {
           margin-bottom: 15px;
-          color: var(--text-color-primary); /* Use variable */
+          color: var(--text-color-primary);
+          /* Use variable */
         }
 
         .filter-group {
@@ -920,15 +956,18 @@ $border-color: var(--border-color);
         flex: 1;
         overflow-y: auto;
         padding: 10px;
-        background: var(--bg-color-page); /* Use variable */
+        background: var(--bg-color-page);
+        /* Use variable */
         overscroll-behavior: contain;
         /* 阻止滚动事件冒泡到父容器 */
 
         .student-card {
-          background: var(--bg-color-card); /* Use variable */
+          background: var(--bg-color-card);
+          /* Use variable */
           padding: 12px;
           border-radius: 6px;
-          border: 1px solid var(--border-color); /* Use variable */
+          border: 1px solid var(--border-color);
+          /* Use variable */
           display: flex;
           align-items: center;
           margin-bottom: 8px;
@@ -943,8 +982,10 @@ $border-color: var(--border-color);
           .card-avatar {
             width: 36px;
             height: 36px;
-            background: var(--bg-color-hover); /* Use variable */
-            color: var(--text-color-secondary); /* Use variable */
+            background: var(--bg-color-hover);
+            /* Use variable */
+            color: var(--text-color-secondary);
+            /* Use variable */
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -958,18 +999,21 @@ $border-color: var(--border-color);
 
             .name {
               font-weight: 600;
-              color: var(--text-color-primary); /* Use variable */
+              color: var(--text-color-primary);
+              /* Use variable */
             }
 
             .meta {
               font-size: 12px;
-              color: var(--text-color-secondary); /* Use variable */
+              color: var(--text-color-secondary);
+              /* Use variable */
               margin-top: 2px;
             }
           }
 
           .drag-icon {
-            color: var(--text-color-placeholder); /* Use variable */
+            color: var(--text-color-placeholder);
+            /* Use variable */
           }
         }
       }
@@ -1009,12 +1053,14 @@ $border-color: var(--border-color);
         .day-col {
           flex: 1;
           text-align: center;
-          background: var(--el-fill-color-light); /* Use variable */
+          background: var(--el-fill-color-light);
+          /* Use variable */
           padding: 10px;
           margin: 0 2px;
           border-radius: 4px;
           font-weight: bold;
-          color: var(--text-color-regular); /* Use variable */
+          color: var(--text-color-regular);
+          /* Use variable */
         }
       }
 
@@ -1029,7 +1075,8 @@ $border-color: var(--border-color);
             /* 特殊时段和下一节课之间多留点缝隙，增加区分度 */
 
             .idx-cell {
-              background-color: var(--el-fill-color-light); /* Use variable */
+              background-color: var(--el-fill-color-light);
+              /* Use variable */
               /* 稍微深一点的背景 */
               color: $primary-color;
               /* 橙色字体 */
@@ -1043,7 +1090,8 @@ $border-color: var(--border-color);
             }
 
             .task-cell {
-              background-color: var(--bg-color-page); /* Use variable */
+              background-color: var(--bg-color-page);
+              /* Use variable */
               /* 格子背景稍微灰一点，表示非正课时间 */
               border-style: dashed;
               /* 边框用虚线，表示特殊性质 */
@@ -1056,14 +1104,17 @@ $border-color: var(--border-color);
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            color: var(--text-color-secondary); /* Use variable */
+            color: var(--text-color-secondary);
+            /* Use variable */
           }
 
           .task-cell {
             flex: 1;
-            background: var(--bg-color-card); /* Use variable */
+            background: var(--bg-color-card);
+            /* Use variable */
             margin: 0 2px;
-            border: 1px solid var(--border-color); /* Use variable */
+            border: 1px solid var(--border-color);
+            /* Use variable */
             border-radius: 4px;
             min-height: 100px;
             padding: 4px;
@@ -1075,7 +1126,8 @@ $border-color: var(--border-color);
 
             &:hover {
               border-color: $primary-color;
-              background-color: var(--bg-color-hover); /* Use variable */
+              background-color: var(--bg-color-hover);
+              /* Use variable */
 
               .cell-action-overlay {
                 opacity: 1;
@@ -1153,7 +1205,8 @@ $border-color: var(--border-color);
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
-  border-bottom: 1px solid var(--border-color); /* Use variable */
+  border-bottom: 1px solid var(--border-color);
+  /* Use variable */
   padding-bottom: 10px;
 
   .highlight {
@@ -1170,12 +1223,14 @@ $border-color: var(--border-color);
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    border-bottom: 1px solid var(--border-color-light); /* Use variable */
+    border-bottom: 1px solid var(--border-color-light);
+    /* Use variable */
     cursor: pointer;
     border-radius: 4px;
 
     &:hover {
-      background: var(--bg-color-hover); /* Use variable */
+      background: var(--bg-color-hover);
+      /* Use variable */
     }
 
     &.is-conflict {
@@ -1195,7 +1250,8 @@ $border-color: var(--border-color);
       .avatar {
         width: 32px;
         height: 32px;
-        background: var(--bg-color-hover); /* Use variable */
+        background: var(--bg-color-hover);
+        /* Use variable */
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -1214,7 +1270,8 @@ $border-color: var(--border-color);
           font-weight: 600;
           font-size: 15px;
           /* 微调：稍微加大名字字号 */
-          color: var(--text-color-primary); /* Use variable */
+          color: var(--text-color-primary);
+          /* Use variable */
         }
 
         /* 【新增】元数据样式 */
@@ -1224,7 +1281,8 @@ $border-color: var(--border-color);
           align-items: center;
           /* 垂直居中 */
           font-size: 12px;
-          color: var(--text-color-secondary); /* Use variable */
+          color: var(--text-color-secondary);
+          /* Use variable */
           margin: 4px 0;
 
           /* 注意：删掉父级原来的 white-space, overflow, text-overflow */
@@ -1232,7 +1290,8 @@ $border-color: var(--border-color);
 
           .divider {
             margin: 0 4px;
-            color: var(--border-color); /* Use variable */
+            color: var(--border-color);
+            /* Use variable */
             flex-shrink: 0;
             /* 分割线永远不许缩小 */
           }
@@ -1284,7 +1343,8 @@ $border-color: var(--border-color);
 <style>
 .dragging-card-fallback {
   /* 强制设置背景色和边框，防止变成透明 */
-  background: var(--bg-color-card) !important; /* Use variable */
+  background: var(--bg-color-card) !important;
+  /* Use variable */
   border: 1px solid var(--el-color-primary) !important;
   /* 拖拽时给个橙色边框提示 */
   border-radius: 6px;
@@ -1307,8 +1367,10 @@ $border-color: var(--border-color);
 .dragging-card-fallback .card-avatar {
   width: 36px;
   height: 36px;
-  background: var(--bg-color-hover); /* Use variable */
-  color: var(--text-color-secondary); /* Use variable */
+  background: var(--bg-color-hover);
+  /* Use variable */
+  color: var(--text-color-secondary);
+  /* Use variable */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1323,12 +1385,14 @@ $border-color: var(--border-color);
 
 .dragging-card-fallback .name {
   font-weight: 600;
-  color: var(--text-color-primary); /* Use variable */
+  color: var(--text-color-primary);
+  /* Use variable */
 }
 
 .dragging-card-fallback .meta {
   font-size: 12px;
-  color: var(--text-color-secondary); /* Use variable */
+  color: var(--text-color-secondary);
+  /* Use variable */
   margin-top: 2px;
 }
 

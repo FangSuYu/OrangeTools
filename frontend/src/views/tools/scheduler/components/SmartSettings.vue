@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" title="🤖 智能排班配置（Beta 当前功能还在开发中，错误很多，对计算结果慎重使用）" width="1100px" top="5vh" :close-on-click-modal="false"
+  <el-dialog v-model="visible" title="🤖 智能排班配置（Beta 当前功能还在开发中，注意人工核对排班结果，如果结果不满意，可换一种策略试试）" width="1100px" top="5vh" :close-on-click-modal="false"
     class="smart-settings-dialog" destroy-on-close>
     <div class="settings-container">
 
